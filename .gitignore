@@ -1,0 +1,52 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDE
+.vscode/
+.idea/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# personal files
+*.log
+*.env
+*.sqlite3
+*.db
+*.bak
+*.backup
+
+# Generated output
+*.pdf
+
+# LaTeX auxiliary files (stray, outside xelatex-resume/)
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# personal folders
+logs/
+xelatex-resume/
+job-role-json/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.lnk
+
+# macOS
+.DS_Store

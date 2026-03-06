@@ -1,0 +1,135 @@
+% !TEX program = xelatex
+\documentclass[fontsize=<< font_size >>pt,a4paper]{scrartcl}
+
+\usepackage[top=<< margin_tb >>in, bottom=<< margin_tb >>in, left=<< margin_lr >>in, right=<< margin_lr >>in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{tabularx}
+\usepackage{fontspec}
+\setmainfont{<< font >>}
+
+\definecolor{sectionblue}{RGB}{<< section_color[0] >>, << section_color[1] >>, << section_color[2] >>}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+
+% Hyphenation settings
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\sloppy
+
+% Page break penalties
+\widowpenalty=10000
+\clubpenalty=10000
+\raggedbottom
+
+% Section formatting -- coloured heading + horizontal rule
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\titleformat{\section}
+  {\large\bfseries\color{sectionblue}}
+  {}
+  {0em}
+  {}
+  [\titlerule]
+
+\begin{document}
+
+<% if personal_info %>
+% Header
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
+\begin{tabular}[t]{@{}l@{}}
+<% if personal_info.location %><< personal_info.location >> \\<% endif %>
+<< personal_info.phone >> \\
+<< personal_info.email >>
+\end{tabular}
+&
+{\huge \textbf{<< personal_info.name >>}}
+&
+\begin{tabular}[t]{@{}r@{}}
+<% if personal_info.github %>\href{<< personal_info.github >>}{<< personal_info.github | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
+<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<< personal_info.linkedin | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
+\end{tabular}
+\end{tabular*}
+<% endif %>
+
+<% if summary %>
+\vspace{10pt}
+\section*{PROFESSIONAL SUMMARY}
+\noindent << summary >>
+<% endif %>
+
+<% if skills %>
+\section*{TECHNICAL SKILLS}
+\begin{tabularx}{\textwidth}{@{}l@{\hspace{0.6em}}>{\raggedright\arraybackslash}X@{}}
+<% for skill in skills %>
+    $\bullet$ \textbf{<< skill.category >>:} & << skill['items'] | join(", ") >><% if not loop.last %> \\[2pt]<% endif %>
+<% endfor %>
+\end{tabularx}
+<% endif %>
+
+<% if experience %>
+\section*{WORK EXPERIENCE}
+<% for exp in experience %>
+<% if not loop.first %>
+\vspace{12pt}
+<% endif %>
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
+\textbf{<< exp.position | split_position_title >>} & \textbf{<< exp.company | split_company_name >>} & \textbf{<< exp.duration >>} \\
+\textit{<< exp.position | split_position_type >>} & \textit{<< exp.company | split_company_city >>} & \\
+\end{tabular*}
+
+\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+<% if exp.achievements %>
+<% for ach in exp.achievements %>
+    $\bullet$ & << ach >><% if not loop.last %> \\[2pt]<% endif %>
+<% endfor %>
+<% endif %>
+\end{tabular}
+
+<% endfor %>
+<% endif %>
+
+<% if projects %>
+\section*{PROJECT WORK}
+\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+<% for proj in projects %>
+    $\bullet$ & \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
+    & {\small \textit{\textbf{Tech:}} << proj.technologies >>}<% if not loop.last %> \\[2pt]<% endif %>
+<% endfor %>
+\end{tabular}
+<% endif %>
+
+<% if education %>
+\section*{EDUCATION}
+<% for edu in education %>
+
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r}
+\textbf{<< edu.institution >>} & \textbf{<< edu.duration >>} \\
+\end{tabular*}
+
+\noindent << edu.degree >> \hfill << edu.gpa | default("") >>
+<% if edu.get("Relevant coursework") or edu.get("coursework") %>
+\noindent{\small \textit{\textbf{Relevant coursework:}} << edu.get("Relevant coursework") or edu.get("coursework") >>}
+<% endif %>
+<% endfor %>
+<% endif %>
+
+
+<% if awards %>
+\section*{AWARDS AND CERTIFICATES}
+\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+<% for award in awards %>
+<% if award.description %>
+    $\bullet$ & \textbf{<< award.title >>:} << award.description >><% if not loop.last %> \\[2pt]<% endif %>
+<% else %>
+    $\bullet$ & << award.title >><% if not loop.last %> \\[2pt]<% endif %>
+<% endif %>
+<% endfor %>
+\end{tabular}
+<% endif %>
+
+\end{document}
