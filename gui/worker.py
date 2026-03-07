@@ -1,9 +1,13 @@
 import asyncio
+import subprocess
+import sys
+import traceback
 from pathlib import Path
 from typing import Callable
 from PySide6.QtCore import QObject, Signal
 
 from gui.config import UIConfig
+from gui.logger import app_logger
 
 # IResumeGenerator-compatible callable — see script/protocols.py.
 # Injected by the caller (main_window.py) so this class never imports a
@@ -80,6 +84,10 @@ class AsyncGenerationWorker(QObject):
             self.finished.emit(True, str(self._get_output_path()))
 
         except Exception as e:
+            app_logger.critical(
+                "Unhandled error in generation worker:\n%s",
+                traceback.format_exc(),
+            )
             self.log_message.emit(f"Error: {str(e)}", "error")
             self.finished.emit(False, str(e))
 
@@ -113,9 +121,7 @@ class AsyncGenerationWorker(QObject):
             self.log_message.emit(f"LaTeX written: {latex_file.name}", "info")
             return True
         except Exception as e:
-            import traceback
-
-            traceback.print_exc()
+            app_logger.error("LaTeX generator error:\n%s", traceback.format_exc())
             self.log_message.emit(f"Generator error: {e}", "error")
             return False
 
@@ -135,12 +141,24 @@ class AsyncGenerationWorker(QObject):
             str(latex_file),
         ]
 
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=str(latex_file.parent),
-        )
+        if sys.platform == "win32":
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(latex_file.parent),
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        else:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(latex_file.parent),
+            )
+
+        assert process.stdout is not None  # guaranteed by stdout=PIPE
+        assert process.stderr is not None  # guaranteed by stderr=PIPE
 
         # Print output lines in real-time as they stream in
         async for line in process.stdout:
@@ -153,12 +171,26 @@ class AsyncGenerationWorker(QObject):
 
         if process.returncode != 0:
             stderr_bytes = await process.stderr.read()
-            if stderr_bytes:
-                self.log_message.emit(
-                    stderr_bytes.decode("utf-8", errors="replace"), "error"
+            stderr_text = (
+                stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+            )
+            if stderr_text:
+                app_logger.error(
+                    "xelatex stderr (rc=%d) for %s:\n%s",
+                    process.returncode,
+                    latex_file.name,
+                    stderr_text,
+                )
+                self.log_message.emit(stderr_text, "error")
+            else:
+                app_logger.error(
+                    "xelatex failed (rc=%d) for %s — no stderr output",
+                    process.returncode,
+                    latex_file.name,
                 )
             return False
 
+        app_logger.info("xelatex OK: %s", latex_file.name)
         return True
 
     def _get_output_path(self):

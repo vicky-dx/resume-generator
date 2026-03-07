@@ -109,11 +109,11 @@
 
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r}
 \textbf{<< edu.institution >>} & \textbf{<< edu.duration >>} \\
+<< edu.degree >> & << edu.gpa | default("") >> \\
 \end{tabular*}
-
-\noindent << edu.degree >> \hfill << edu.gpa | default("") >>
-<% if edu.get("Relevant coursework") or edu.get("coursework") %>
-\noindent{\small \textit{\textbf{Relevant coursework:}} << edu.get("Relevant coursework") or edu.get("coursework") >>}
+<% set _cw = edu.get("Relevant coursework") or edu.get("coursework") %>
+<% if _cw %>
+\noindent{\small \textit{\textbf{Relevant coursework:}} << _cw | join(", ") if _cw is iterable and _cw is not string else _cw >>}
 <% endif %>
 <% endfor %>
 <% endif %>

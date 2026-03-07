@@ -3,15 +3,35 @@
 
 import sys
 import asyncio
-from pathlib import Path
+import traceback
 import qasync
 from PySide6.QtWidgets import QApplication
 from gui.main_window import ResumeGeneratorMainWindow
 from gui.utils import get_base_path
 from gui.services.file_manager import FileManager
+from gui.logger import setup_logging, app_logger
+
+
+def _install_excepthook():
+    """Log any uncaught exception to file before the process dies."""
+
+    def _handle_exception(exc_type, exc_value, exc_tb):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_tb)
+            return
+        app_logger.critical(
+            "Uncaught exception:\n%s",
+            "".join(traceback.format_exception(exc_type, exc_value, exc_tb)),
+        )
+
+    sys.excepthook = _handle_exception
 
 
 def main():
+    setup_logging()
+    _install_excepthook()
+
+    app_logger.info("Launching QApplication")
     app = QApplication(sys.argv)
     app.setApplicationName("Resume Generator")
 

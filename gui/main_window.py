@@ -10,9 +10,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QComboBox,
     QPushButton,
+    QProgressBar,
 )
 from PySide6.QtGui import QIcon, QFont
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 
 from gui.config import UIConfig
 from gui.utils import get_base_path, get_resource_path
@@ -121,11 +122,54 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
         main_layout.addWidget(self.generate_panel)
 
+        # Floating progress overlay — parented to central widget so it sits
+        # on top of everything. Repositioned in resizeEvent.
+        self._progress_overlay = QWidget(central)
+        self._progress_overlay.setObjectName("progressOverlay")
+        overlay_layout = QHBoxLayout(self._progress_overlay)
+        overlay_layout.setContentsMargins(10, 6, 10, 6)
+        overlay_layout.setSpacing(8)
+
+        self._progress_label = QLabel("Generating…")
+        self._progress_label.setObjectName("progressLabel")
+        overlay_layout.addWidget(self._progress_label)
+
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setObjectName("generationProgress")
+        self._progress_bar.setRange(0, 100)
+        self._progress_bar.setValue(0)
+        self._progress_bar.setFixedWidth(200)
+        self._progress_bar.setFixedHeight(10)
+        self._progress_bar.setTextVisible(False)
+        overlay_layout.addWidget(self._progress_bar)
+
+        self._progress_overlay.adjustSize()
+        self._progress_overlay.setVisible(False)
+
         # Hide generate panel on form editor tab
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._reposition_progress_overlay()
+
+    def _reposition_progress_overlay(self):
+        margin = 14
+        cw = self.centralWidget()
+        if cw is None:
+            return
+        self._progress_overlay.adjustSize()
+        ow = self._progress_overlay.width()
+        oh = self._progress_overlay.height()
+        x = cw.width() - ow - margin
+        y = cw.height() - oh - margin
+        self._progress_overlay.move(x, y)
+        self._progress_overlay.raise_()
+
     def _on_tab_changed(self, index):
         self.action_panel.setVisible(index != 2)
+        if index == 0:
+            self.refresh_templates()
 
     def show_message(self, message: str, level: str = "info"):
         """Show message box."""
@@ -311,17 +355,33 @@ class ResumeGeneratorMainWindow(QMainWindow):
             style_params=style_params,
         )
         self.worker.log_message.connect(self.log_panel.append_message)
+        self.worker.progress_update.connect(self._on_progress_update)
         self.worker.finished.connect(self.on_generation_finished)
+        self._progress_bar.setValue(0)
+        self._progress_label.setText("Generating…")
+        self._progress_overlay.setVisible(True)
+        self._reposition_progress_overlay()
         await self.worker.run()
+
+    def _on_progress_update(self, value: int):
+        self._progress_bar.setValue(value)
 
     def on_generation_finished(self, success: bool, message: str):
         self.is_generating = False
         self.action_panel.set_generating_state(False)
 
+        # Stay visible at 100% — overlay resets when the next run starts
+        self._progress_bar.setValue(100)
+        self._progress_label.setText("✅ Done" if success else "❌ Failed")
+
         if success:
             self.show_message("Resume generated successfully!", "success")
         else:
             self.show_message(f"Generation failed:\n{message}", "error")
+
+    def _hide_progress_overlay(self):
+        self._progress_overlay.setVisible(False)
+        self._progress_bar.setValue(0)
 
     def open_output_folder(self):
         import os, platform

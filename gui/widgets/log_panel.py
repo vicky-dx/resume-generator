@@ -3,6 +3,7 @@ from PySide6.QtGui import QFont
 
 from gui.config import UIConfig
 from gui.ui_helpers import make_icon_button
+from gui.logger import app_logger
 
 
 class LogPanel(QWidget):
@@ -17,14 +18,13 @@ class LogPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
-        # Header row — all sizing from UIConfig, no magic numbers
         toggle_row = QHBoxLayout()
         toggle_row.setContentsMargins(0, 0, 0, 0)
         toggle_row.setSpacing(UIConfig.ROW_SPACING)
 
-        self._log_toggle_btn = QPushButton("\u25b6 Build Output")
+        self._log_toggle_btn = QPushButton("▶ Build Output")
         self._log_toggle_btn.setCheckable(True)
-        self._log_toggle_btn.setChecked(True)
+        self._log_toggle_btn.setChecked(False)
         self._log_toggle_btn.setFixedHeight(UIConfig.ROW_HEIGHT)
         self._log_toggle_btn.setProperty("cssClass", "log_toggle")
         self._log_toggle_btn.clicked.connect(self._toggle_log)
@@ -52,11 +52,14 @@ class LogPanel(QWidget):
         self._log_toggle_btn.setText("▼ Build Output" if checked else "▶ Build Output")
 
     def append_message(self, message: str, level: str = "info"):
-        """Append a colored message to the log, auto-expanding if needed."""
-        # Auto-expand log on first message
-        if not self._log_toggle_btn.isChecked():
-            self._log_toggle_btn.setChecked(True)
-            self._toggle_log(True)
+        """Append a colored message to the log without auto-expanding."""
+        _level_map = {
+            "info": app_logger.info,
+            "success": app_logger.info,
+            "warning": app_logger.warning,
+            "error": app_logger.error,
+        }
+        _level_map.get(level, app_logger.info)("[UI] %s", message)
 
         colors = {
             "info": "#d4d4d4",
@@ -64,20 +67,19 @@ class LogPanel(QWidget):
             "warning": "#ce9178",
             "error": "#f44747",
         }
-
         color = colors.get(level, "#d4d4d4")
 
-        # Format HTML safely
         safe_msg = (
             message.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         )
 
-        # Add timestamp and message with color
         import datetime
 
         time_str = datetime.datetime.now().strftime("%H:%M:%S")
-        html = f'<span style="color: #808080">[{time_str}]</span> <span style="color: {color}">{safe_msg}</span>'
-
+        html = (
+            f'<span style="color: #808080">[{time_str}]</span> '
+            f'<span style="color: {color}">{safe_msg}</span>'
+        )
         self.log_text.append(html)
 
     def clear_log(self):

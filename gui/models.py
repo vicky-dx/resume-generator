@@ -19,9 +19,17 @@ class SkillCategory(BaseModel):
 
 class Experience(BaseModel):
     company: str = ""
-    title: str = Field(default="", validation_alias=AliasChoices("title", "position"), serialization_alias="position")
+    title: str = Field(
+        default="",
+        validation_alias=AliasChoices("title", "position"),
+        serialization_alias="position",
+    )
     location: str = ""
-    date: str = Field(default="", validation_alias=AliasChoices("duration", "date"), serialization_alias="duration")
+    date: str = Field(
+        default="",
+        validation_alias=AliasChoices("duration", "date"),
+        serialization_alias="duration",
+    )
     achievements: List[str] = Field(default_factory=list)
 
     @field_validator("achievements", mode="before")
@@ -37,7 +45,12 @@ class Education(BaseModel):
     institution: str = ""
     degree: str = ""
     location: str = ""
-    date: str = Field(default="", validation_alias=AliasChoices("duration", "date"), serialization_alias="duration")
+    date: str = Field(
+        default="",
+        validation_alias=AliasChoices("duration", "date"),
+        serialization_alias="duration",
+    )
+    gpa: str = ""
     coursework: List[str] = Field(
         default_factory=list,
         validation_alias=AliasChoices("coursework", "Relevant coursework"),
@@ -49,6 +62,7 @@ class Education(BaseModel):
     def coerce_coursework(cls, v: Any) -> List[str]:
         if isinstance(v, str):
             import re
+
             # Split by comma but clean up whitespace
             return [x.strip() for x in re.split(r",\s*", v) if x.strip()]
         return v
@@ -61,7 +75,11 @@ class Project(BaseModel):
         validation_alias=AliasChoices("technologies", "tech_stack"),
         serialization_alias="technologies",
     )
-    date: str = Field(default="", validation_alias=AliasChoices("year", "date"), serialization_alias="year")
+    date: str = Field(
+        default="",
+        validation_alias=AliasChoices("year", "date"),
+        serialization_alias="year",
+    )
     description: List[str] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
@@ -76,7 +94,11 @@ class Project(BaseModel):
 class Award(BaseModel):
     title: str = ""
     issuer: str = ""
-    date: str = Field(default="", validation_alias=AliasChoices("description", "date"), serialization_alias="description")
+    date: str = Field(
+        default="",
+        validation_alias=AliasChoices("description", "date"),
+        serialization_alias="description",
+    )
 
 
 class ResumeData(BaseModel):

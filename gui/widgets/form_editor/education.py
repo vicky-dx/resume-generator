@@ -75,6 +75,7 @@ class EducationWidget(ListBasedSectionWidget):
             institution=self.edu_institution.text().strip(),
             degree=self.edu_degree.text().strip(),
             date=self.edu_duration.text().strip(),
+            gpa=self.edu_gpa.text().strip(),
             coursework=coursework_list,
         ).model_dump(by_alias=True)
 
@@ -83,9 +84,7 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_institution.setText(edu.institution)
         self.edu_degree.setText(edu.degree)
         self.edu_duration.setText(edu.date)
-        self.edu_gpa.setText(
-            data.get("gpa", "")
-        )  # Note: gpa not in our standard Education dataclass, let's keep it safe
+        self.edu_gpa.setText(edu.gpa)
         self.edu_coursework.setPlainText(", ".join(edu.coursework))
         # Reset validation state after loading clean data
         for w in (self.edu_institution, self.edu_degree, self.edu_duration):

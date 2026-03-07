@@ -36,7 +36,7 @@ class MarkupConverter:
     def __init__(self, char_map: Dict[str, str]):
         self._char_map = char_map
         self._bold_pat = re.compile(r"\*\*(.+?)\*\*")
-        self._italic_pat = re.compile(r"__(.+?)__")
+        self._italic_pat = re.compile(r"\*([^*\n]+?)\*")
 
     def convert(self, text: str) -> str:
         text = self._apply(text, self._bold_pat, r"\textbf", self._italic_pat)

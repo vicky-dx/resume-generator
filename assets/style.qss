@@ -239,3 +239,30 @@ QFrame[cssClass="divider"] {
     border-top: 1px solid #CED4DA;
     background: transparent;
 }
+
+/* Generation Progress — floating overlay */
+QWidget#progressOverlay {
+    background-color: #F0F4F8;
+    border: 1px solid #CED4DA;
+    border-radius: 8px;
+}
+
+QProgressBar#generationProgress {
+    background-color: #E9ECEF;
+    border: 1px solid #CED4DA;
+    border-radius: 6px;
+}
+QProgressBar#generationProgress::chunk {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 #0078d4,
+        stop: 1 #00b4d8
+    );
+    border-radius: 5px;
+}
+
+QLabel#progressLabel {
+    color: #495057;
+    font-size: 9pt;
+    font-style: italic;
+}
