@@ -3,6 +3,54 @@ QWidget {
     font-family: "Segoe UI", "Inter", "Roboto", sans-serif;
 }
 
+/* Scrollbar */
+QScrollBar:vertical {
+    background: #F1F3F5;
+    width: 8px;
+    border-radius: 4px;
+    margin: 0;
+}
+QScrollBar::handle:vertical {
+    background: #CED4DA;
+    min-height: 24px;
+    border-radius: 4px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #ADB5BD;
+}
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
+}
+QScrollBar:horizontal {
+    background: #F1F3F5;
+    height: 8px;
+    border-radius: 4px;
+    margin: 0;
+}
+QScrollBar::handle:horizontal {
+    background: #CED4DA;
+    min-width: 24px;
+    border-radius: 4px;
+}
+QScrollBar::handle:horizontal:hover {
+    background: #ADB5BD;
+}
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: none;
+}
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
 QMainWindow { 
     background-color: #ffffff; 
 }

@@ -28,6 +28,7 @@ class ProjectsWidget(ListBasedSectionWidget):
         self._add_field(form_layout, "Year", self.proj_year)
         self._add_field(form_layout, "Technologies", self.proj_tech)
         self._add_rich_text_field(form_layout, "Description", self.proj_desc)
+        self._setup_live_title_update(self.proj_name)
 
     def _get_current_item_data(self) -> dict:
         return Project(

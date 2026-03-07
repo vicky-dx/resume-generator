@@ -85,7 +85,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.template_tab = TemplateTab(self.file_manager)
         self.template_tab.edit_requested.connect(self.load_template_for_editing)
         self.template_tab.refresh_requested.connect(self.refresh_templates)
-        self.tabs.addTab(self.template_tab, get_icon(UIConfig.ICON_TEMPLATE), "From Template")
+        self.tabs.addTab(
+            self.template_tab, get_icon(UIConfig.ICON_TEMPLATE), "From Template"
+        )
 
         self.quick_tab = QuickCreateTab()
         self.quick_tab.save_requested.connect(self.save_quick_template)
@@ -96,6 +98,7 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.form_tab.load_requested.connect(self._form_load_template)
         self.form_tab.save_requested.connect(self._form_save_to_file)
         self.form_tab.save_and_generate_requested.connect(self._form_save_and_generate)
+        self.form_tab.open_folder_requested.connect(self.open_output_folder)
         self.tabs.addTab(self.form_tab, get_icon(UIConfig.ICON_EDIT), "Form Editor")
 
         # Bottom Panel
@@ -304,10 +307,7 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
     def _form_save_and_generate(self, name: str, data: dict, style_config: dict):
         if self._form_save_to_file(name, data):
-            self.tabs.setCurrentIndex(2)
-            # Pass the style configuration collected from FormEditor's ActionPanel
-            import asyncio
-            asyncio.create_task(self.generate_resume(style_params=style_config))
+            self.generate_resume(style_params=style_config)
 
     # --- Generation ---
 
@@ -371,9 +371,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.is_generating = False
         self.action_panel.set_generating_state(False)
 
-        # Stay visible at 100% — overlay resets when the next run starts
         self._progress_bar.setValue(100)
         self._progress_label.setText("✅ Done" if success else "❌ Failed")
+        QTimer.singleShot(3000, self._hide_progress_overlay)
 
         if success:
             self.show_message("Resume generated successfully!", "success")

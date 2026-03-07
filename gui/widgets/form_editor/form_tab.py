@@ -184,10 +184,17 @@ class FormEditorTab(QWidget):
             # Direct attribute assignment (old approach) bypassed them in Pydantic v2.
             return ResumeData.model_validate(raw).model_dump(by_alias=True)
         except ValidationError as e:
+            lines = []
+            for err in e.errors():
+                loc = (
+                    " → ".join(str(p) for p in err["loc"]) if err["loc"] else "document"
+                )
+                lines.append(f"• {loc}: {err['msg']}")
             QMessageBox.critical(
                 self,
                 "Validation Error",
-                f"Resume data is invalid — generation blocked.\n\n{e}",
+                "Resume data is invalid — please fix the following fields:\n\n"
+                + "\n".join(lines),
             )
             return None
 

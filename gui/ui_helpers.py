@@ -5,7 +5,7 @@ UIConfig's single responsibility is holding constants; widget creation is a
 separate concern and belongs here.
 """
 
-from PySide6.QtWidgets import QPushButton, QLabel, QApplication
+from PySide6.QtWidgets import QPushButton, QLabel
 from PySide6.QtCore import Qt, QPoint, QTimer
 from PySide6.QtGui import QCursor
 
@@ -22,9 +22,7 @@ class _CustomTooltip(QLabel):
     @classmethod
     def instance(cls) -> "_CustomTooltip":
         if cls._instance is None or not cls._instance.isVisible():
-            # Get the active top-level window to use as parent so it stays on top
-            parent = QApplication.activeWindow()
-            cls._instance = cls(parent)
+            cls._instance = cls(None)
         return cls._instance
 
     def __init__(self, parent=None):

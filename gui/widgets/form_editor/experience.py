@@ -45,6 +45,7 @@ class ExperienceWidget(ListBasedSectionWidget):
         self._add_rich_text_field(
             form_layout, "Achievements (one bullet per line)", self.exp_achievements
         )
+        self._setup_live_title_update(self.exp_company)
 
         # Real-time validation
         self.exp_company.textChanged.connect(

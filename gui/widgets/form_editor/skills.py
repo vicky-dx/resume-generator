@@ -26,6 +26,7 @@ class SkillsWidget(ListBasedSectionWidget):
         self._add_field(form_layout, "Category Name", self.cat_edit)
         self._add_rich_text_field(form_layout, "Skills (one per line)", self.items_edit)
         form_layout.addWidget(hint)
+        self._setup_live_title_update(self.cat_edit)
 
     def _get_current_item_data(self) -> dict:
         cat = self.cat_edit.text().strip()

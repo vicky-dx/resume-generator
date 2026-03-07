@@ -110,7 +110,7 @@ class ActionPanelWidget(QWidget):
         set_custom_tooltip(self.margin_lr, "Left and Right page margins in inches.")
         r2.addWidget(self.margin_lr)
 
-        r2.addWidget(QLabel("  Gaps (pt) - Sec:"))
+        r2.addWidget(QLabel("  Gaps (pt) - Section:"))
         self.section_spacing = QComboBox()
         self.section_spacing.addItems(["4", "6", "8", "10", "12", "14"])
         self.section_spacing.setCurrentIndex(2)  # default 10pt
@@ -171,6 +171,7 @@ class ActionPanelWidget(QWidget):
         set_custom_tooltip(
             self.icons_chk, "Load fontawesome5 — enables \\faIcon{} in templates"
         )
+        self.icons_chk.setChecked(True)  # Enable icons by default
         r3.addWidget(self.icons_chk)
 
         r3.addWidget(QLabel("  Protect:"))

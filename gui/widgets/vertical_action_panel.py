@@ -11,12 +11,28 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QScrollArea,
 )
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QColor
 
 from gui.config import UIConfig
 from gui.utils import get_resource_path
 from gui.ui_helpers import apply_style, get_icon, set_custom_tooltip
+
+
+class _ScrollSafeComboBox(QComboBox):
+    """QComboBox that ignores scroll wheel events unless the popup is open.
+    Prevents accidental value changes while scrolling the panel.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+    def wheelEvent(self, event):
+        if self.view().isVisible():
+            super().wheelEvent(event)
+        else:
+            event.ignore()
 
 
 class VerticalActionPanelWidget(QWidget):
@@ -66,7 +82,7 @@ class VerticalActionPanelWidget(QWidget):
         # -- Document Style --
         _add_section_header("🎨 Document Style")
 
-        self.style_template = QComboBox()
+        self.style_template = _ScrollSafeComboBox()
         self._populate_templates()
         _add_row(
             "Template:",
@@ -74,7 +90,7 @@ class VerticalActionPanelWidget(QWidget):
             tooltip="Choose the visual layout template for the PDF.",
         )
 
-        self.style_font = QComboBox()
+        self.style_font = _ScrollSafeComboBox()
         self.style_font.addItems(
             ["Calibri", "Arial", "Georgia", "Times New Roman", "Verdana"]
         )
@@ -84,11 +100,11 @@ class VerticalActionPanelWidget(QWidget):
             tooltip="Base font family used across the document.",
         )
 
-        self.style_size = QComboBox()
+        self.style_size = _ScrollSafeComboBox()
         self.style_size.addItems(
             ["9.0", "9.5", "10.0", "10.5", "11.0", "11.5", "12.0", "12.5", "13.0"]
         )
-        self.style_size.setCurrentIndex(5)
+        self.style_size.setCurrentIndex(5) # default 11pt
         _add_row(
             "Size:",
             self.style_size,
@@ -111,43 +127,43 @@ class VerticalActionPanelWidget(QWidget):
         # -- Layout Options --
         _add_section_header("📏 Layout Options")
 
-        self.margin_tb = QComboBox()
+        self.margin_tb = _ScrollSafeComboBox()
         self.margin_tb.addItems(["0.3", "0.4", "0.5", "0.6", "0.7", "0.8"])
-        self.margin_tb.setCurrentIndex(2)
+        self.margin_tb.setCurrentIndex(2) # default 0.5in
         _add_row(
             "Margin TB (in):",
             self.margin_tb,
             tooltip="Top and Bottom page margins in inches.",
         )
 
-        self.margin_lr = QComboBox()
+        self.margin_lr = _ScrollSafeComboBox()
         self.margin_lr.addItems(["0.4", "0.5", "0.6", "0.7", "0.8", "0.9"])
-        self.margin_lr.setCurrentIndex(2)
+        self.margin_lr.setCurrentIndex(1) # default 0.5in
         _add_row(
             "Margin LR (in):",
             self.margin_lr,
             tooltip="Left and Right page margins in inches.",
         )
 
-        self.section_spacing = QComboBox()
+        self.section_spacing = _ScrollSafeComboBox()
         self.section_spacing.addItems(["4", "6", "8", "10", "12", "14"])
-        self.section_spacing.setCurrentIndex(3)
+        self.section_spacing.setCurrentIndex(2) # default 8pt
         _add_row(
-            "Gaps - Sec (pt):",
+            "Gaps - Section (pt):",
             self.section_spacing,
             tooltip="Vertical space between major sections (e.g. Experience to Education).",
         )
 
-        self.entry_spacing = QComboBox()
+        self.entry_spacing = _ScrollSafeComboBox()
         self.entry_spacing.addItems(["4", "6", "8", "10", "12", "14"])
-        self.entry_spacing.setCurrentIndex(2)
+        self.entry_spacing.setCurrentIndex(2) # default 8pt
         _add_row(
-            "Gaps - Entry (pt):",
+            "Gaps - Job Entry (pt):",
             self.entry_spacing,
             tooltip="Vertical space between individual job entries in Work Experience.",
         )
 
-        self.style_spacing = QComboBox()
+        self.style_spacing = _ScrollSafeComboBox()
         self.style_spacing.addItems(["0", "0.3", "0.5", "0.8", "1.0", "1.5", "2.0"])
         self.style_spacing.setCurrentIndex(2)  # default 0.5pt
         _add_row(
@@ -161,7 +177,7 @@ class VerticalActionPanelWidget(QWidget):
         # -- Details & Lists --
         _add_section_header("📋 Details & Lists")
 
-        self.style_bullet = QComboBox()
+        self.style_bullet = _ScrollSafeComboBox()
         self.style_bullet.addItems(
             ["•  bullet", "–  dash", "›  arrow", "→  right arrow"]
         )
@@ -171,9 +187,9 @@ class VerticalActionPanelWidget(QWidget):
             tooltip="The symbol used for bullet points in lists.",
         )
 
-        self.bullet_indent = QComboBox()
+        self.bullet_indent = _ScrollSafeComboBox()
         self.bullet_indent.addItems(["0.2", "0.4", "0.6", "0.8", "1.0", "1.2", "1.5"])
-        self.bullet_indent.setCurrentIndex(5)
+        self.bullet_indent.setCurrentIndex(5) # default 1.2em
         _add_row(
             "Indent (em):",
             self.bullet_indent,
@@ -182,6 +198,8 @@ class VerticalActionPanelWidget(QWidget):
 
         self.icons_chk = QCheckBox("Use Icons (fa5)")
         set_custom_tooltip(self.icons_chk, "Load fontawesome5")
+        # select checkbox bydefault
+        self.icons_chk.setChecked(True)
         settings_layout.addWidget(self.icons_chk)
 
         self.extra_terms_input = QLineEdit()

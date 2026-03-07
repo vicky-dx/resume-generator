@@ -46,6 +46,7 @@ class EducationWidget(ListBasedSectionWidget):
         self._add_rich_text_field(
             form_layout, "Relevant Coursework (comma-separated)", self.edu_coursework
         )
+        self._setup_live_title_update(self.edu_institution)
 
         # Real-time validation
         self.edu_institution.textChanged.connect(

@@ -18,6 +18,7 @@ class AwardsWidget(ListBasedSectionWidget):
 
         self._add_field(form_layout, "Title", self.award_title)
         self._add_field(form_layout, "Description", self.award_desc)
+        self._setup_live_title_update(self.award_title)
 
     def _get_current_item_data(self) -> dict:
         return Award(

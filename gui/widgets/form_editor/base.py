@@ -177,7 +177,7 @@ class ListBasedSectionWidget(BaseSectionWidget):
         if new_idx >= 0:
             self.item_list.setCurrentRow(new_idx)
         else:
-            self._clear_form()
+            self._load_index(-1)
 
     # Methods to override in subclasses:
     def _get_current_item_data(self) -> dict:
@@ -195,6 +195,25 @@ class ListBasedSectionWidget(BaseSectionWidget):
     def _get_empty_item(self) -> dict:
         return {}
 
+    def _setup_live_title_update(self, widget):
+        """Connect widget's text change to live-update the current list item title."""
+        from PySide6.QtWidgets import QLineEdit, QTextEdit
+
+        if isinstance(widget, QLineEdit):
+            widget.textChanged.connect(self._update_current_title)
+        elif isinstance(widget, QTextEdit):
+            widget.textChanged.connect(self._update_current_title)
+
+    def _update_current_title(self):
+        idx = self.current_idx
+        if 0 <= idx < len(self.data_list):
+            item = self.item_list.item(idx)
+            if item:
+                data = self._get_current_item_data()
+                title = self._get_item_title(data)
+                if title:
+                    item.setText(title)
+
     # Public BaseSectionWidget interface — LSP-compliant implementations:
     def clear(self):
         """Reset the entire list and form to an empty state."""
@@ -202,6 +221,7 @@ class ListBasedSectionWidget(BaseSectionWidget):
         self.data_list = []
         self.item_list.clear()
         self._clear_form()
+        self.right_stack.setCurrentWidget(self.empty_widget)
 
     # Internal list implementations (removes LSP violation):
     def _collect_list(self) -> list:
@@ -220,9 +240,3 @@ class ListBasedSectionWidget(BaseSectionWidget):
             )
         if self.data_list:
             self.item_list.setCurrentRow(0)
-
-    def clear(self):
-        self.data_list = []
-        self.item_list.clear()
-        self._clear_form()
-        self.current_idx = -1
