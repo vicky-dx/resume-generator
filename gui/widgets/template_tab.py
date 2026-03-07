@@ -11,6 +11,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
 
 from gui.config import UIConfig
+from gui.ui_helpers import get_icon
 from gui.protocols import ITemplateLoader  # ISP: narrow interface, not full FileManager
 
 
@@ -40,11 +41,13 @@ class TemplateTab(QWidget):
 
         header_layout.addWidget(header_label)
 
-        self.edit_btn = QPushButton("✏️ Edit")
+        self.edit_btn = QPushButton(" Edit")
+        self.edit_btn.setIcon(get_icon(UIConfig.ICON_EDIT))
         self.edit_btn.clicked.connect(self._on_edit_clicked)
         header_layout.addWidget(self.edit_btn)
 
-        self.refresh_btn = QPushButton(f"{UIConfig.ICON_REFRESH} Refresh")
+        self.refresh_btn = QPushButton(" Refresh")
+        self.refresh_btn.setIcon(get_icon(UIConfig.ICON_REFRESH))
         self.refresh_btn.clicked.connect(self.refresh_requested.emit)
         header_layout.addWidget(self.refresh_btn)
         header_layout.addStretch()

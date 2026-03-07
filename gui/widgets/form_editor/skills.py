@@ -17,28 +17,32 @@ class SkillsWidget(ListBasedSectionWidget):
         self.items_edit = QTextEdit()
         self.items_edit.setPlaceholderText("Python\nSQL\nAWS S3\nDocker")
 
-        hint = QLabel("Tip: Select a category on the left, then edit its name and skills here.")
+        hint = QLabel(
+            "Tip: Select a category on the left, then edit its name and skills here."
+        )
         hint.setWordWrap(True)
         hint.setProperty("cssClass", "hint")
 
         self._add_field(form_layout, "Category Name", self.cat_edit)
-        self._add_field(form_layout, "Skills (one per line)", self.items_edit)
+        self._add_rich_text_field(form_layout, "Skills (one per line)", self.items_edit)
         form_layout.addWidget(hint)
 
     def _get_current_item_data(self) -> dict:
         cat = self.cat_edit.text().strip()
-        skills = [s.strip() for s in self.items_edit.toPlainText().split("\n") if s.strip()]
+        skills = [
+            s.strip() for s in self.items_edit.toPlainText().split("\n") if s.strip()
+        ]
         return SkillCategory(category=cat, items=skills).model_dump(by_alias=True)
 
     def _set_current_item_data(self, data: dict):
         skill_cat = SkillCategory.model_validate(data)
         self.cat_edit.setText(skill_cat.category)
-        
+
         # Handle backwards compatibility (older JSON stored them as 'skills' list vs 'items' in dataclass)
         if skill_cat.items:
-             self.items_edit.setPlainText("\n".join(skill_cat.items))
+            self.items_edit.setPlainText("\n".join(skill_cat.items))
         elif "skills" in data:
-             self.items_edit.setPlainText("\n".join(data["skills"]))
+            self.items_edit.setPlainText("\n".join(data["skills"]))
 
     def _clear_form(self):
         self.cat_edit.clear()
@@ -56,11 +60,15 @@ class SkillsWidget(ListBasedSectionWidget):
         skills = {}
         for entry in self.data_list:
             skill_cat = SkillCategory.model_validate(entry)
-            
+
             # Backwards compat extraction if not matching strict dataclass schema yet
-            cat = skill_cat.category if skill_cat.category else entry.get("category", "").strip()
+            cat = (
+                skill_cat.category
+                if skill_cat.category
+                else entry.get("category", "").strip()
+            )
             items = skill_cat.items if skill_cat.items else entry.get("skills", [])
-            
+
             if cat:
                 skills[cat] = items
         return {"skills": skills}
@@ -68,11 +76,14 @@ class SkillsWidget(ListBasedSectionWidget):
     def populate(self, data: dict):
         # Determine if data arrived as a raw dictionary (legacy format) or a pre-validated list of dicts.
         skills_data = data.get("skills", [])
-        
+
         list_data = []
         if isinstance(skills_data, dict):
             # Legacy format {"Category": ["A", "B"]}
-            list_data = [SkillCategory(category=cat, items=skills).model_dump(by_alias=True) for cat, skills in skills_data.items()]
+            list_data = [
+                SkillCategory(category=cat, items=skills).model_dump(by_alias=True)
+                for cat, skills in skills_data.items()
+            ]
         elif isinstance(skills_data, list):
             # Already mapped by Pydantic ResumeData before validator -> [{"category": "Cat", "items": ["A"]}]
             list_data = skills_data

@@ -42,7 +42,7 @@ class ExperienceWidget(ListBasedSectionWidget):
         self._add_field(form_layout, "Company", self.exp_company)
         self._add_field(form_layout, "Position", self.exp_position)
         self._add_field(form_layout, "Duration", self.exp_duration)
-        self._add_field(
+        self._add_rich_text_field(
             form_layout, "Achievements (one bullet per line)", self.exp_achievements
         )
 

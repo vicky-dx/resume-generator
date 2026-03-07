@@ -1,25 +1,30 @@
 % !TEX program = xelatex
-\documentclass[fontsize=<< font_size >>pt,a4paper]{scrartcl}
+\documentclass[fontsize=<< font_size >>pt, a4paper, DIV=12]{scrartcl}
 
 \usepackage[top=<< margin_tb >>in, bottom=<< margin_tb >>in, left=<< margin_lr >>in, right=<< margin_lr >>in]{geometry}
-\usepackage{titlesec}
-\usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
+\usepackage{bookmark}
 \usepackage{xcolor}
 \usepackage{microtype}
 \usepackage{tabularx}
+\usepackage{lmodern}
 \usepackage{fontspec}
 \setmainfont{<< font >>}
+<% if use_icons %>
+\usepackage{fontawesome5}
+<% endif %>
 
 \definecolor{sectionblue}{RGB}{<< section_color[0] >>, << section_color[1] >>, << section_color[2] >>}
 
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
+\renewcommand{\arraystretch}{<< (1.0 + item_spacing * 0.15) | round(2) >>}
 
 % Hyphenation settings
 \hyphenpenalty=10000
 \exhyphenpenalty=10000
+\hbadness=10000
 \sloppy
 
 % Page break penalties
@@ -27,14 +32,18 @@
 \clubpenalty=10000
 \raggedbottom
 
-% Section formatting -- coloured heading + horizontal rule
-\titlespacing*{\section}{0pt}{10pt}{4pt}
-\titleformat{\section}
-  {\large\bfseries\color{sectionblue}}
-  {}
-  {0em}
-  {}
-  [\titlerule]
+% KOMA-native section formatting (coloured heading + horizontal rule)
+\setkomafont{section}{\large\bfseries\color{sectionblue}}
+\renewcommand*{\sectionformat}{}
+\RedeclareSectionCommand[beforeskip=<< section_spacing >>pt, afterskip=4pt, afterindent=false]{section}
+\makeatletter
+\renewcommand*{\sectionlinesformat}[4]{%
+  \@hangfrom{\hskip #2#3}{#4}\par\nobreak
+  \nointerlineskip
+  \vskip 4pt
+  \rule{\linewidth}{0.4pt}%
+}
+\makeatother
 
 \begin{document}
 
@@ -42,22 +51,21 @@
 % Header
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
 \begin{tabular}[t]{@{}l@{}}
-<% if personal_info.location %><< personal_info.location >> \\<% endif %>
-<< personal_info.phone >> \\
-<< personal_info.email >>
+<% if personal_info.location %><% if use_icons %>\faIcon{map-marker-alt}\ <% endif %><< personal_info.location >> \\<% endif %>
+<% if use_icons %>\faIcon{phone}\ <% endif %><< personal_info.phone >> \\
+<% if use_icons %>\faIcon{envelope}\ <% endif %><< personal_info.email >>
 \end{tabular}
 &
 {\huge \textbf{<< personal_info.name >>}}
 &
 \begin{tabular}[t]{@{}r@{}}
-<% if personal_info.github %>\href{<< personal_info.github >>}{<< personal_info.github | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
-<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<< personal_info.linkedin | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
+<% if personal_info.github %>\href{<< personal_info.github >>}{<% if use_icons %>\faIcon{github}\ <% endif %><< personal_info.github | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
+<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<% if use_icons %>\faIcon{linkedin}\ <% endif %><< personal_info.linkedin | replace("https://", "") | replace("http://", "") >>} \\<% endif %>
 \end{tabular}
 \end{tabular*}
 <% endif %>
 
 <% if summary %>
-\vspace{10pt}
 \section*{PROFESSIONAL SUMMARY}
 \noindent << summary >>
 <% endif %>
@@ -66,7 +74,7 @@
 \section*{TECHNICAL SKILLS}
 \begin{tabularx}{\textwidth}{@{}l@{\hspace{0.6em}}>{\raggedright\arraybackslash}X@{}}
 <% for skill in skills %>
-    $\bullet$ \textbf{<< skill.category >>:} & << skill['items'] | join(", ") >><% if not loop.last %> \\[2pt]<% endif %>
+    \textcolor{sectionblue}{<< bullet >>} \textbf{<< skill.category >>:} & << skill['items'] | join(", ") >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
 <% endfor %>
 \end{tabularx}
 <% endif %>
@@ -75,17 +83,17 @@
 \section*{WORK EXPERIENCE}
 <% for exp in experience %>
 <% if not loop.first %>
-\vspace{12pt}
+\vspace{<< entry_spacing >>pt}
 <% endif %>
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
 \textbf{<< exp.position | split_position_title >>} & \textbf{<< exp.company | split_company_name >>} & \textbf{<< exp.duration >>} \\
 \textit{<< exp.position | split_position_type >>} & \textit{<< exp.company | split_company_city >>} & \\
 \end{tabular*}
 
-\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
 <% if exp.achievements %>
 <% for ach in exp.achievements %>
-    $\bullet$ & << ach >><% if not loop.last %> \\[2pt]<% endif %>
+    \textcolor{sectionblue}{<< bullet >>} & << ach >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
 <% endfor %>
 <% endif %>
 \end{tabular}
@@ -95,10 +103,10 @@
 
 <% if projects %>
 \section*{PROJECT WORK}
-\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
 <% for proj in projects %>
-    $\bullet$ & \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
-    & {\small \textit{\textbf{Tech:}} << proj.technologies >>}<% if not loop.last %> \\[2pt]<% endif %>
+    \textcolor{sectionblue}{<< bullet >>} & \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
+    & {\small \textit{\textbf{Tech:}} << proj.technologies >>}<% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
 <% endfor %>
 \end{tabular}
 <% endif %>
@@ -121,12 +129,12 @@
 
 <% if awards %>
 \section*{AWARDS AND CERTIFICATES}
-\begin{tabular}{@{\hspace{1.2em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-1.2em-0.4em-1em\relax}@{}}
+\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
 <% for award in awards %>
 <% if award.description %>
-    $\bullet$ & \textbf{<< award.title >>:} << award.description >><% if not loop.last %> \\[2pt]<% endif %>
+    \textcolor{sectionblue}{<< bullet >>} & \textbf{<< award.title >>:} << award.description >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
 <% else %>
-    $\bullet$ & << award.title >><% if not loop.last %> \\[2pt]<% endif %>
+    \textcolor{sectionblue}{<< bullet >>} & << award.title >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
 <% endif %>
 <% endfor %>
 \end{tabular}

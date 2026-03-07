@@ -9,11 +9,16 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QFrame,
 )
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtGui import QFont
 
 from gui.config import UIConfig
-from gui.ui_helpers import apply_style
+from gui.ui_helpers import (
+    apply_style,
+    get_icon,
+    set_custom_tooltip,
+    install_list_tooltip_filter,
+)
 from pydantic import ValidationError
 from gui.widgets.form_editor.personal_info import PersonalInfoWidget
 from gui.widgets.form_editor.skills import SkillsWidget
@@ -21,15 +26,20 @@ from gui.widgets.form_editor.experience import ExperienceWidget
 from gui.widgets.form_editor.education import EducationWidget
 from gui.widgets.form_editor.projects import ProjectsWidget
 from gui.widgets.form_editor.awards import AwardsWidget
+from gui.widgets.vertical_action_panel import VerticalActionPanelWidget
 from gui.models import ResumeData
+from gui.utils import get_resource_path
 
 
 class FormEditorTab(QWidget):
     """Main Form Editor tab comprising the sidebar nav, toolbar, and stacked widgets."""
 
     save_requested = Signal(str, dict)  # resume_name, data_dict
-    save_and_generate_requested = Signal(str, dict)  # resume_name, data_dict
+    save_and_generate_requested = Signal(
+        str, dict, dict
+    )  # resume_name, data_dict, style_config
     load_requested = Signal()
+    open_folder_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -45,102 +55,110 @@ class FormEditorTab(QWidget):
         toolbar = QWidget()
         toolbar.setObjectName("formToolbar")
         toolbar_layout = QHBoxLayout(toolbar)
-        toolbar_layout.setContentsMargins(12, 8, 12, 8)
-        toolbar_layout.setSpacing(10)
+        toolbar_layout.setContentsMargins(16, 12, 16, 12)
+        toolbar_layout.setSpacing(16)
 
-        # ── Group 1: Name + file buttons ─────────────────────────────────
-        name_card = QWidget()
-        name_card.setObjectName("nameCard")
-        name_card_layout = QHBoxLayout(name_card)
-        name_card_layout.setContentsMargins(10, 6, 10, 6)
-        name_card_layout.setSpacing(8)
-
-        name_lbl = QLabel("✏️  Resume Name:")
+        name_lbl = QLabel("Resume Name:")
         name_lbl.setProperty("cssClass", "header_secondary")
-        name_card_layout.addWidget(name_lbl)
+        toolbar_layout.addWidget(name_lbl)
 
         self.form_resume_name = QLineEdit()
-        self.form_resume_name.setPlaceholderText("e.g., software-engineer-google")
-        self.form_resume_name.setMinimumWidth(220)
-        self.form_resume_name.setMaximumWidth(300)
-        name_card_layout.addWidget(self.form_resume_name)
+        self.form_resume_name.setPlaceholderText("e.g., john-doe-swe")
+        self.form_resume_name.setMaximumWidth(320)
+        toolbar_layout.addWidget(self.form_resume_name)
 
         div1 = QFrame()
         div1.setFrameShape(QFrame.VLine)
-        div1.setFrameShadow(QFrame.Sunken)
-        div1.setProperty("cssClass", "divider")
-        name_card_layout.addWidget(div1)
+        div1.setFrameShadow(QFrame.Plain)
+        div1.setStyleSheet("border-left: 1px solid #CED4DA;")
+        toolbar_layout.addWidget(div1)
 
-        load_btn = QPushButton("📂 Load")
-        load_btn.setToolTip("Open a saved JSON resume file into this form")
+        load_btn = QPushButton(" Load")
+        load_btn.setIcon(get_icon(UIConfig.ICON_FOLDER))
+        set_custom_tooltip(load_btn, "Open a saved JSON file into this form")
+        apply_style(load_btn, "default")
         load_btn.clicked.connect(self.load_requested.emit)
-        name_card_layout.addWidget(load_btn)
+        toolbar_layout.addWidget(load_btn)
 
-        save_btn = QPushButton("💾 Save")
-        save_btn.setToolTip("Save current form data as a JSON template")
+        save_btn = QPushButton(" Save JSON")
+        save_btn.setIcon(get_icon(UIConfig.ICON_SAVE))
+        set_custom_tooltip(save_btn, "Save form data as a JSON template")
+        apply_style(save_btn, "default")
         save_btn.clicked.connect(self._on_save_clicked)
-        name_card_layout.addWidget(save_btn)
+        toolbar_layout.addWidget(save_btn)
 
-        toolbar_layout.addWidget(name_card)
-        toolbar_layout.addSpacing(8)
+        clear_btn = QPushButton(" Clear")
+        clear_btn.setIcon(get_icon(UIConfig.ICON_TRASH, color="white"))
+        set_custom_tooltip(clear_btn, "Reset all form fields")
+        apply_style(clear_btn, "danger")
+        clear_btn.clicked.connect(self._on_clear_clicked)
+        toolbar_layout.addWidget(clear_btn)
 
-        # ── Group 2: Generate + Clear ─────────────────────────────────────
-        action_card = QWidget()
-        action_card.setObjectName("formActionCard")
-        action_card_layout = QHBoxLayout(action_card)
-        action_card_layout.setContentsMargins(10, 6, 10, 6)
-        action_card_layout.setSpacing(8)
-
-        gen_btn = QPushButton("🚀 Save & Generate PDF")
-        gen_btn.setToolTip("Save and compile the resume to PDF")
-        gen_btn.setMinimumWidth(200)
-        gen_btn.setMinimumHeight(36)
-        apply_style(gen_btn, "primary")
-        gen_btn.clicked.connect(self._on_save_and_generate_clicked)
-        action_card_layout.addWidget(gen_btn)
-
-        clear_form_btn = QPushButton("🗑️ Clear")
-        clear_form_btn.setToolTip("Reset all form fields")
-        apply_style(clear_form_btn, "danger")
-        clear_form_btn.clicked.connect(self._on_clear_clicked)
-        action_card_layout.addWidget(clear_form_btn)
-
-        toolbar_layout.addWidget(action_card)
         toolbar_layout.addStretch()
         layout.addWidget(toolbar)
 
-        # ── Body: left nav + right stacked panel ──────────────────────────
+        # ── Body: 3-column Left Nav + Stacked Panel + Right Settings ───────
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(0)
 
         self.form_nav = QListWidget()
         self.form_nav.setObjectName("formNav")
-        self.form_nav.setFixedWidth(160)
+        self.form_nav.setFixedWidth(64)
         self.form_nav.setSpacing(0)
+        self.form_nav.setIconSize(QSize(32, 32))
 
         section_configs = [
-            ("👤  Personal", PersonalInfoWidget),
-            ("🛠  Skills", SkillsWidget),
-            ("💼  Experience", ExperienceWidget),
-            ("🎓  Education", EducationWidget),
-            ("📁  Projects", ProjectsWidget),
-            ("🏆  Certifications", AwardsWidget),
+            ("personal.png", "Personal Info", PersonalInfoWidget),
+            ("skills.png", "Skills", SkillsWidget),
+            ("experience.png", "Experience", ExperienceWidget),
+            ("education.png", "Education", EducationWidget),
+            ("project.png", "Projects", ProjectsWidget),
+            ("certification.png", "Certifications", AwardsWidget),
         ]
 
         self.form_stack = QStackedWidget()
 
-        for name, widget_class in section_configs:
-            self.form_nav.addItem(name)
+        from PySide6.QtWidgets import QListWidgetItem
+        from PySide6.QtGui import QIcon
+
+        assets_dir = get_resource_path("assets")
+
+        for icon_file, tooltip, widget_class in section_configs:
+            item = QListWidgetItem()
+            item.setToolTip(tooltip)
+            icon_path = assets_dir / icon_file
+            if icon_path.exists():
+                item.setIcon(QIcon(str(icon_path)))
+
+            # Align icon in the center natively
+            item.setTextAlignment(Qt.AlignCenter)
+            self.form_nav.addItem(item)
+
             widget_instance = widget_class()
             self.sections.append(widget_instance)
             self.form_stack.addWidget(widget_instance)
 
         self.form_nav.setCurrentRow(0)
         self.form_nav.currentRowChanged.connect(self.form_stack.setCurrentIndex)
+        install_list_tooltip_filter(self.form_nav)
         body.addWidget(self.form_nav)
 
         body.addWidget(self.form_stack, 1)
+
+        div_v = QFrame()
+        div_v.setFrameShape(QFrame.VLine)
+        div_v.setFrameShadow(QFrame.Plain)
+        div_v.setStyleSheet("border-left: 1px solid #CED4DA;")
+        body.addWidget(div_v)
+
+        self.action_panel = VerticalActionPanelWidget()
+        self.action_panel.generate_requested.connect(
+            self._on_action_panel_generate_requested
+        )
+        self.action_panel.open_folder_requested.connect(self.open_folder_requested.emit)
+        body.addWidget(self.action_panel)
+
         layout.addLayout(body, 1)
 
         self.setMinimumHeight(400)
@@ -180,12 +198,12 @@ class FormEditorTab(QWidget):
             return
         self.save_requested.emit(name, data)
 
-    def _on_save_and_generate_clicked(self):
+    def _on_action_panel_generate_requested(self, style_config: dict):
         name = self.form_resume_name.text().strip()
         data = self._collect_data()
         if data is None:
             return
-        self.save_and_generate_requested.emit(name, data)
+        self.save_and_generate_requested.emit(name, data, style_config)
 
     def _on_clear_clicked(self):
         from PySide6.QtWidgets import QMessageBox

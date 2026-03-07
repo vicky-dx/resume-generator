@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
 )
 from PySide6.QtCore import Qt
+from gui.ui_helpers import apply_style
 
 
 class BaseSectionWidget(QWidget):
@@ -52,13 +53,16 @@ class ListBasedSectionWidget(BaseSectionWidget):
         left_layout.addWidget(QLabel(list_title))
 
         self.item_list = QListWidget()
+        self.item_list.setObjectName("innerNav")
         self.item_list.currentRowChanged.connect(self._on_row_changed)
         left_layout.addWidget(self.item_list, 1)
 
         btns_layout = QHBoxLayout()
         add_btn = QPushButton("+ Add")
+        apply_style(add_btn, "primary")
         add_btn.clicked.connect(self._add_item)
         rm_btn = QPushButton("− Remove")
+        apply_style(rm_btn, "default")
         rm_btn.clicked.connect(self._remove_item)
         btns_layout.addWidget(add_btn)
         btns_layout.addWidget(rm_btn)
@@ -68,13 +72,16 @@ class ListBasedSectionWidget(BaseSectionWidget):
 
         # Right panel: Form container with Stacked Widget to support an Empty State
         from PySide6.QtWidgets import QStackedWidget
+
         self.right_stack = QStackedWidget()
 
         # 1. Empty State Widget
         self.empty_widget = QWidget()
         empty_layout = QVBoxLayout(self.empty_widget)
-        
-        self.empty_label = QLabel(f"Select a {self.item_name} on the left to edit\n\nor click '+ Add' to create a new one.")
+
+        self.empty_label = QLabel(
+            f"Select a {self.item_name} on the left to edit\n\nor click '+ Add' to create a new one."
+        )
         self.empty_label.setProperty("cssClass", "empty_state")
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(self.empty_label)
@@ -82,13 +89,15 @@ class ListBasedSectionWidget(BaseSectionWidget):
         # 2. Form State Widget
         self.right_scroll = QScrollArea()
         self.right_scroll.setWidgetResizable(True)
-        self.right_scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
-        
+        self.right_scroll.setStyleSheet(
+            "QScrollArea { border: none; background-color: transparent; }"
+        )
+
         self.right_container = QWidget()
         self.right_form = QVBoxLayout(self.right_container)
         self.right_form.setSpacing(16)
         self.right_form.setContentsMargins(16, 16, 16, 16)
-        
+
         # Add a clear stretchy spacer at the bottom by default
         self._setup_form(self.right_form)
         self.right_form.addStretch()
@@ -109,6 +118,23 @@ class ListBasedSectionWidget(BaseSectionWidget):
         lbl = QLabel(label_text)
         lbl.setProperty("cssClass", "field_label")
         layout.addWidget(lbl)
+        layout.addWidget(widget)
+
+    def _add_rich_text_field(
+        self, layout: QVBoxLayout, label_text: str, widget: QWidget
+    ):
+        """Like _add_field but with a B/I formatting toolbar for multi-line text fields."""
+        from PySide6.QtWidgets import QHBoxLayout
+        from gui.widgets.format_toolbar import FormatToolbar
+
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(6)
+        lbl = QLabel(label_text)
+        lbl.setProperty("cssClass", "field_label")
+        header.addWidget(lbl)
+        header.addWidget(FormatToolbar(widget))
+        layout.addLayout(header)
         layout.addWidget(widget)
 
     def _on_row_changed(self, row):

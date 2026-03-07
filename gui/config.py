@@ -39,14 +39,16 @@ class UIConfig:
     COLOR_BG = "#ffffff"
     COLOR_LOG_BG = "#f5f5f5"
 
-    # Icons
-    ICON_FOLDER = "📂"
-    ICON_ROCKET = "🚀"
-    ICON_REFRESH = "🔄"
-    ICON_PASTE = "📋"
-    ICON_TRASH = "🗑️"
-    ICON_TEMPLATE = ""
-    ICON_QUICK = "✨"
+    # QtAwesome Icons
+    ICON_FOLDER = "fa5s.folder-open"
+    ICON_ROCKET = "fa5s.rocket"
+    ICON_REFRESH = "fa5s.sync-alt"
+    ICON_PASTE = "fa5s.clipboard"
+    ICON_TRASH = "fa5s.trash"
+    ICON_TEMPLATE = "fa5s.file-alt"
+    ICON_QUICK = "fa5s.bolt"
+    ICON_EDIT = "fa5s.pen"
+    ICON_SAVE = "fa5s.save"
 
     # ── SRP Note ──────────────────────────────────────────────────────────────
     # Widget creation helpers have been moved to gui.ui_helpers (apply_style,

@@ -28,6 +28,13 @@ def generate_resume(
     section_color: Tuple[int, int, int] = (96, 36, 191),
     margin_tb: float = 0.5,
     margin_lr: float = 0.5,
+    item_spacing: float = 2.0,
+    section_spacing: int = 10,
+    entry_spacing: int = 8,
+    bullet_indent: float = 1.2,
+    bullet: str = "•",
+    use_icons: bool = False,
+    extra_protected_terms: list = None,
 ) -> str:
     """
     Public API — wire dependencies and delegate to ResumeGeneratorService.
@@ -42,8 +49,17 @@ def generate_resume(
         section_color=section_color,
         margin_tb=margin_tb,
         margin_lr=margin_lr,
+        item_spacing=item_spacing,
+        section_spacing=section_spacing,
+        entry_spacing=entry_spacing,
+        bullet_indent=bullet_indent,
+        bullet=bullet,
+        use_icons=use_icons,
+        extra_protected_terms=extra_protected_terms or [],
     )
-    escaper = build_default_escaper(track_protected=True)
+    escaper = build_default_escaper(
+        track_protected=True, extra_terms=extra_protected_terms or []
+    )
     env = build_jinja_env(template_dir)
     JinjaEnvConfigurator().configure(env, style, escaper)
     builder = JinjaLatexDocumentBuilder(env, escaper, template_name)

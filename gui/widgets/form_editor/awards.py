@@ -28,12 +28,12 @@ class AwardsWidget(ListBasedSectionWidget):
     def _set_current_item_data(self, data: dict):
         award = Award.model_validate(data)
         self.award_title.setText(award.title)
-        
+
         # Handle backward compability logic
         if award.date:
-             self.award_desc.setText(award.date)
+            self.award_desc.setText(award.date)
         elif "description" in data:
-             self.award_desc.setText(data["description"])
+            self.award_desc.setText(data["description"])
 
     def _clear_form(self):
         self.award_title.clear()

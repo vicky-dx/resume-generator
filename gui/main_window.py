@@ -19,6 +19,7 @@ from gui.config import UIConfig
 from gui.utils import get_base_path, get_resource_path
 from gui.protocols import IFileManager
 from qasync import asyncSlot
+from gui.ui_helpers import get_icon
 from gui.worker import AsyncGenerationWorker
 from script.generate_resume import (
     generate_resume as _generate_resume,
@@ -78,25 +79,24 @@ class ResumeGeneratorMainWindow(QMainWindow):
         )
         main_layout.setSpacing(UIConfig.PAD_SECTION)
 
-        # Tabs
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
 
         self.template_tab = TemplateTab(self.file_manager)
         self.template_tab.edit_requested.connect(self.load_template_for_editing)
         self.template_tab.refresh_requested.connect(self.refresh_templates)
-        self.tabs.addTab(self.template_tab, f"{UIConfig.ICON_TEMPLATE} From Template")
+        self.tabs.addTab(self.template_tab, get_icon(UIConfig.ICON_TEMPLATE), "From Template")
 
         self.quick_tab = QuickCreateTab()
         self.quick_tab.save_requested.connect(self.save_quick_template)
         self.quick_tab.validate_requested.connect(self.validate_json)
-        self.tabs.addTab(self.quick_tab, f"{UIConfig.ICON_QUICK} Quick Create")
+        self.tabs.addTab(self.quick_tab, get_icon(UIConfig.ICON_QUICK), "Quick Create")
 
         self.form_tab = FormEditorTab()
         self.form_tab.load_requested.connect(self._form_load_template)
         self.form_tab.save_requested.connect(self._form_save_to_file)
         self.form_tab.save_and_generate_requested.connect(self._form_save_and_generate)
-        self.tabs.addTab(self.form_tab, "✏️ Form Editor")
+        self.tabs.addTab(self.form_tab, get_icon(UIConfig.ICON_EDIT), "Form Editor")
 
         # Bottom Panel
         self.generate_panel = QWidget()
@@ -302,11 +302,12 @@ class ResumeGeneratorMainWindow(QMainWindow):
             self.show_message(f"Failed to save: {e}", "error")
             return False
 
-    def _form_save_and_generate(self, name: str, data: dict):
+    def _form_save_and_generate(self, name: str, data: dict, style_config: dict):
         if self._form_save_to_file(name, data):
             self.tabs.setCurrentIndex(2)
-            # Fetch default generation params from the component manually if firing from Form toolbar
-            self.action_panel._on_generate_clicked()
+            # Pass the style configuration collected from FormEditor's ActionPanel
+            import asyncio
+            asyncio.create_task(self.generate_resume(style_params=style_config))
 
     # --- Generation ---
 

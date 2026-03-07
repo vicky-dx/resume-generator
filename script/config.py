@@ -65,9 +65,12 @@ DEFAULT_CHAR_MAP: Dict[str, str] = {
 }
 
 
-def build_default_escaper(track_protected: bool = True) -> LatexEscaper:
+def build_default_escaper(
+    track_protected: bool = True, extra_terms: List[str] = None
+) -> LatexEscaper:
     """Factory: wire up the default LatexEscaper from standard config."""
     char_escaper = LatexCharEscaper(DEFAULT_CHAR_MAP)
     markup_converter = MarkupConverter(DEFAULT_CHAR_MAP)
-    term_protector = TermProtector(DEFAULT_PROTECTED_TERMS, track=track_protected)
+    all_terms = DEFAULT_PROTECTED_TERMS + (extra_terms or [])
+    term_protector = TermProtector(all_terms, track=track_protected)
     return LatexEscaper(char_escaper, markup_converter, term_protector)

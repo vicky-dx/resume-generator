@@ -34,7 +34,7 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_gpa.setPlaceholderText("CGPA: 8/10")
 
         self.edu_coursework = QTextEdit()
-        self.edu_coursework.setMaximumHeight(80)
+        self.edu_coursework.setMaximumHeight(150)
         self.edu_coursework.setPlaceholderText(
             "Data Structures, Algorithms, Machine Learning, Databases..."
         )
@@ -43,7 +43,7 @@ class EducationWidget(ListBasedSectionWidget):
         self._add_field(form_layout, "Degree", self.edu_degree)
         self._add_field(form_layout, "Duration", self.edu_duration)
         self._add_field(form_layout, "GPA", self.edu_gpa)
-        self._add_field(
+        self._add_rich_text_field(
             form_layout, "Relevant Coursework (comma-separated)", self.edu_coursework
         )
 

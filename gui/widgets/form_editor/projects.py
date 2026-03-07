@@ -22,19 +22,23 @@ class ProjectsWidget(ListBasedSectionWidget):
         self.proj_desc.setPlaceholderText(
             "Developed an internal dashboard...\n\nAutomated reporting pipeline..."
         )
-        self.proj_desc.setMinimumHeight(200)
+        self.proj_desc.setMinimumHeight(300)
 
         self._add_field(form_layout, "Name", self.proj_name)
         self._add_field(form_layout, "Year", self.proj_year)
         self._add_field(form_layout, "Technologies", self.proj_tech)
-        self._add_field(form_layout, "Description", self.proj_desc)
+        self._add_rich_text_field(form_layout, "Description", self.proj_desc)
 
     def _get_current_item_data(self) -> dict:
         return Project(
             name=self.proj_name.text().strip(),
             date=self.proj_year.text().strip(),
             tech_stack=self.proj_tech.text().strip(),
-            description=[line.strip() for line in self.proj_desc.toPlainText().split("\n") if line.strip()],
+            description=[
+                line.strip()
+                for line in self.proj_desc.toPlainText().split("\n")
+                if line.strip()
+            ],
         ).model_dump(by_alias=True)
 
     def _set_current_item_data(self, data: dict):
@@ -42,18 +46,18 @@ class ProjectsWidget(ListBasedSectionWidget):
         self.proj_name.setText(proj.name)
         self.proj_year.setText(proj.date)
         self.proj_tech.setText(proj.tech_stack)
-        
+
         # Handle backward compatibility
         if not proj.date and "year" in data:
             self.proj_year.setText(data["year"])
         if not proj.tech_stack and "technologies" in data:
             self.proj_tech.setText(data["technologies"])
-            
+
         # Previously projects stored description as str. Dataclass standardizes to list.
         if isinstance(data.get("description"), str):
-             self.proj_desc.setPlainText(data.get("description", ""))
+            self.proj_desc.setPlainText(data.get("description", ""))
         else:
-             self.proj_desc.setPlainText("\n\n".join(proj.description))
+            self.proj_desc.setPlainText("\n\n".join(proj.description))
 
     def _clear_form(self):
         self.proj_name.clear()

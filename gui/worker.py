@@ -117,6 +117,15 @@ class AsyncGenerationWorker(QObject):
                 section_color=self.style_params.get("section_color", (96, 36, 191)),
                 margin_tb=self.style_params.get("margin_tb", 0.5),
                 margin_lr=self.style_params.get("margin_lr", 0.5),
+                item_spacing=self.style_params.get("item_spacing", 2.0),
+                section_spacing=self.style_params.get("section_spacing", 10),
+                entry_spacing=self.style_params.get("entry_spacing", 8),
+                bullet_indent=self.style_params.get("bullet_indent", 1.2),
+                bullet=self.style_params.get("bullet", "•"),
+                use_icons=self.style_params.get("use_icons", False),
+                extra_protected_terms=self.style_params.get(
+                    "extra_protected_terms", []
+                ),
             )
             self.log_message.emit(f"LaTeX written: {latex_file.name}", "info")
             return True

@@ -54,6 +54,13 @@ class StyleConfig:
     section_color: Tuple[int, int, int] = field(default_factory=lambda: (96, 36, 191))
     margin_tb: float = 0.5
     margin_lr: float = 0.6
+    item_spacing: float = 2.0
+    section_spacing: int = 10
+    entry_spacing: int = 8
+    bullet_indent: float = 1.2
+    bullet: str = "•"
+    use_icons: bool = False
+    extra_protected_terms: list = field(default_factory=list)
 
 
 # ── JinjaEnvConfigurator — OCP: extend here, never touch the builder ──────
@@ -94,6 +101,12 @@ class JinjaEnvConfigurator:
         env.globals["section_color"] = style.section_color
         env.globals["margin_tb"] = style.margin_tb
         env.globals["margin_lr"] = style.margin_lr
+        env.globals["item_spacing"] = style.item_spacing
+        env.globals["section_spacing"] = style.section_spacing
+        env.globals["entry_spacing"] = style.entry_spacing
+        env.globals["bullet_indent"] = style.bullet_indent
+        env.globals["bullet"] = style.bullet
+        env.globals["use_icons"] = style.use_icons
 
 
 # ── Factory ───────────────────────────────────────────────────────────────

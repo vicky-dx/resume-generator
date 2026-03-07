@@ -36,12 +36,20 @@ QTabBar::tab:!selected:hover {
 }
 
 /* Form Controls */
-QLineEdit, QTextEdit, QComboBox {
+QLineEdit, QTextEdit {
     background-color: #FFFFFF;
     border: 1px solid #CED4DA;
     border-radius: 5px;
     padding: 6px 10px;
-    font-size: 11pt;
+    font-size: 12pt;
+}
+QComboBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CED4DA;
+    border-radius: 5px;
+    padding: 3px 15px 3px 8px;
+    font-size: 10pt;
+    min-height: 12px;
 }
 QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
     border: 1px solid #0078d4;
@@ -113,6 +121,16 @@ QPushButton[cssClass="icon"] {
 }
 QPushButton[cssClass="icon"]:hover { background: #E9ECEF; border-color: #ADB5BD; }
 QPushButton[cssClass="icon"]:pressed { background: #DEE2E6; border-color: #999999; }
+
+QPushButton[cssClass="format_btn"] { 
+    background: #FFFFFF; 
+    border: 1px solid #CED4DA; 
+    border-radius: 4px; 
+    padding: 0; 
+    font-size: 11pt; 
+}
+QPushButton[cssClass="format_btn"]:hover { background: #E9ECEF; border-color: #ADB5BD; }
+QPushButton[cssClass="format_btn"]:pressed { background: #DEE2E6; border-color: #999999; }
 
 QPushButton[cssClass="log_toggle"] {
     text-align: left; 
@@ -186,21 +204,41 @@ QListWidget#formNav {
     outline: none; 
 }
 QListWidget#formNav::item { 
-    padding: 4px 12px; 
-    font-size: 10pt; 
-    color: #495057; 
+    padding: 16px 0px; 
+    padding-left: 14px; /* Centers a 32px icon inside a 64px wide container */
     border-radius: 0; 
+    border-bottom: 1px solid #E9ECEF;
 }
 QListWidget#formNav::item:selected { 
-    background-color: #0078d4; 
-    color: white; 
-    font-weight: bold; 
-    border-left: 3px solid #004578; 
-    padding: 4px 12px;
-    padding-left: 9px; 
+    background-color: transparent; 
+    border-left: 4px solid #0078d4; 
+    padding-left: 10px; /* Offset to keep icon centered when 4px border is added */
 }
 QListWidget#formNav::item:hover:!selected { 
-    background-color: #E9ECEF; 
+    background-color: #F1F3F5; 
+}
+
+QListWidget#innerNav {
+    border: 1px solid #CED4DA;
+    border-radius: 4px;
+    background: #FFFFFF;
+    outline: none;
+    padding: 2px;
+}
+QListWidget#innerNav::item {
+    padding: 8px 10px;
+    font-size: 10pt;
+    color: #495057;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+QListWidget#innerNav::item:selected {
+    background-color: #E3F2FD;
+    color: #0078d4;
+    font-weight: bold;
+}
+QListWidget#innerNav::item:hover:!selected {
+    background-color: #F8F9FA;
 }
 
 /* Hints / Tooltips / Form Labels */

@@ -1,4 +1,13 @@
-from PySide6.QtWidgets import QWidget, QFormLayout, QLineEdit, QFrame, QLabel, QTextEdit, QVBoxLayout, QScrollArea
+from PySide6.QtWidgets import (
+    QWidget,
+    QFormLayout,
+    QLineEdit,
+    QFrame,
+    QLabel,
+    QTextEdit,
+    QVBoxLayout,
+    QScrollArea,
+)
 from PySide6.QtGui import QFont
 
 from gui.widgets.form_editor.base import BaseSectionWidget
@@ -16,7 +25,7 @@ class PersonalInfoWidget(BaseSectionWidget):
     def _setup_ui(self):
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
-        
+
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(scroll)
@@ -59,17 +68,22 @@ class PersonalInfoWidget(BaseSectionWidget):
         sep.setProperty("cssClass", "divider")
         form.addWidget(sep)
 
-        summary_hdr = QLabel("Professional Summary:")
-        summary_hdr.setProperty("cssClass", "header_primary")
-        form.addWidget(summary_hdr)
+        from PySide6.QtWidgets import QHBoxLayout
+        from gui.widgets.format_toolbar import FormatToolbar
 
         self.f_summary = QTextEdit()
         self.f_summary.setPlaceholderText(
             "Write a 2-3 sentence summary of your experience, skills, and goals..."
         )
         self.f_summary.setMinimumHeight(120)
+        summary_header = QHBoxLayout()
+        summary_hdr = QLabel("Professional Summary:")
+        summary_hdr.setProperty("cssClass", "header_primary")
+        summary_header.addWidget(summary_hdr)
+        summary_header.addWidget(FormatToolbar(self.f_summary))
+        form.addLayout(summary_header)
         form.addWidget(self.f_summary)
-        
+
         form.addStretch()
 
         scroll.setWidget(container)
