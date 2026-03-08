@@ -49,6 +49,9 @@ class UIConfig:
     ICON_QUICK = "fa5s.bolt"
     ICON_EDIT = "fa5s.pen"
     ICON_SAVE = "fa5s.save"
+    ICON_LIBRARY = "fa5s.layer-group"
+    ICON_PROJECT = "fa5s.project-diagram"
+    ICON_SKILLS = "fa5s.tags"
 
     # ── SRP Note ──────────────────────────────────────────────────────────────
     # Widget creation helpers have been moved to gui.ui_helpers (apply_style,

@@ -27,8 +27,10 @@ from script.generate_resume import (
 from gui.widgets.template_tab import TemplateTab
 from gui.widgets.quick_create_tab import QuickCreateTab
 from gui.widgets.form_editor.form_tab import FormEditorTab
+from gui.widgets.library_tab import LibraryTab
 from gui.widgets.log_panel import LogPanel
 from gui.widgets.action_panel import ActionPanelWidget
+from gui.services.library_service import LibraryService
 
 
 class ResumeGeneratorMainWindow(QMainWindow):
@@ -101,6 +103,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.form_tab.open_folder_requested.connect(self.open_output_folder)
         self.tabs.addTab(self.form_tab, get_icon(UIConfig.ICON_EDIT), "Form Editor")
 
+        self.library_tab = LibraryTab(LibraryService(self.json_folder))
+        self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_LIBRARY), "Library")
+
         # Bottom Panel
         self.generate_panel = QWidget()
         panel_layout = QVBoxLayout(self.generate_panel)
@@ -170,7 +175,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self._progress_overlay.raise_()
 
     def _on_tab_changed(self, index):
-        self.action_panel.setVisible(index != 2)
+        # Hide the generate action panel on tabs that have their own controls
+        # or are read-only (Form Editor = 2, Library = 3)
+        self.action_panel.setVisible(index not in (2, 3))
         if index == 0:
             self.refresh_templates()
 

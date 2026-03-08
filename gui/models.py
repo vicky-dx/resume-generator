@@ -16,6 +16,14 @@ class SkillCategory(BaseModel):
     category: str = ""
     items: List[str] = Field(default_factory=list)
 
+    @field_validator("items", mode="before")
+    @classmethod
+    def coerce_items(cls, v: Any) -> List[str]:
+        """Handle skills stored as a comma-separated string instead of a list."""
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
 
 class Experience(BaseModel):
     company: str = ""
@@ -89,6 +97,12 @@ class Project(BaseModel):
             # Split by newline but clean up whitespace
             return [x.strip() for x in v.split("\n") if x.strip()]
         return v
+
+
+class LibraryProject(Project):
+    """Project entry enriched with its source JSON filename for the library view."""
+
+    source: str = ""
 
 
 class Award(BaseModel):
