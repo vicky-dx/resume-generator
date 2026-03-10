@@ -50,7 +50,9 @@ class ListBasedSectionWidget(BaseSectionWidget):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(4)
-        left_layout.addWidget(QLabel(list_title))
+        list_title_lbl = QLabel(list_title)
+        list_title_lbl.setProperty("cssClass", "header_secondary")
+        left_layout.addWidget(list_title_lbl)
 
         self.item_list = QListWidget()
         self.item_list.setObjectName("innerNav")

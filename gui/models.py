@@ -132,3 +132,11 @@ class ResumeData(BaseModel):
         if isinstance(v, dict):
             return [{"category": k, "items": val} for k, val in v.items()]
         return v
+
+    @field_validator("awards", mode="before")
+    @classmethod
+    def coerce_awards(cls, v: Any) -> List[Any]:
+        """Allow awards stored as plain strings — treat each string as the title."""
+        if isinstance(v, list):
+            return [{"title": item} if isinstance(item, str) else item for item in v]
+        return v

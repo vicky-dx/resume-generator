@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication
 
 from gui.config import UIConfig
 from gui.utils import get_base_path, get_resource_path
@@ -58,8 +59,19 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
     def _setup_ui(self):
         self.setWindowTitle("Resume Generator")
-        self.setMinimumSize(UIConfig.WIDTH, UIConfig.HEIGHT)
-        self.resize(UIConfig.WIDTH, UIConfig.HEIGHT)
+
+        # Fit window to available screen — important for laptops / low-res displays.
+        screen = QApplication.primaryScreen().availableGeometry()
+        win_w = min(UIConfig.WIDTH, screen.width())
+        win_h = min(UIConfig.HEIGHT, screen.height())
+        # Minimum size: small enough to always fit, but large enough to be usable.
+        self.setMinimumSize(min(800, screen.width()), min(600, screen.height()))
+        self.resize(win_w, win_h)
+        # Center on screen
+        self.move(
+            screen.x() + (screen.width() - win_w) // 2,
+            screen.y() + (screen.height() - win_h) // 2,
+        )
 
         # Set window icon
         assets = get_resource_path("assets")

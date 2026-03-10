@@ -54,7 +54,7 @@ class FormatToolbar(QWidget):
         layout.addWidget(italic_btn)
 
         hint = QLabel("  **bold**  *italic*")
-        hint.setStyleSheet("color: #999; font-size: 10px;")
+        hint.setProperty("cssClass", "hint")
         layout.addWidget(hint)
 
         layout.addStretch()

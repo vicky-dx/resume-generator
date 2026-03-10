@@ -73,6 +73,7 @@ class VerticalActionPanelWidget(QWidget):
             r = QHBoxLayout()
             r.setSpacing(10)
             lbl = QLabel(label_text)
+            lbl.setProperty("cssClass", "field_label")
             r.addWidget(lbl)
             r.addWidget(widget, stretch=1)
             if tooltip:
@@ -84,11 +85,20 @@ class VerticalActionPanelWidget(QWidget):
 
         self.style_template = _ScrollSafeComboBox()
         self._populate_templates()
-        _add_row(
-            "Template:",
-            self.style_template,
-            tooltip="Choose the visual layout template for the PDF.",
-        )
+
+        tmpl_row = QHBoxLayout()
+        tmpl_row.setSpacing(6)
+        tmpl_lbl = QLabel("Template:")
+        tmpl_lbl.setProperty("cssClass", "field_label")
+        tmpl_row.addWidget(tmpl_lbl)
+        tmpl_row.addWidget(self.style_template, stretch=1)
+        _refresh_tmpl_btn = QPushButton("↺")
+        _refresh_tmpl_btn.setFixedSize(24, 24)
+        _refresh_tmpl_btn.setProperty("cssClass", "icon")
+        set_custom_tooltip(_refresh_tmpl_btn, "Rescan templates folder")
+        _refresh_tmpl_btn.clicked.connect(self._populate_templates)
+        tmpl_row.addWidget(_refresh_tmpl_btn)
+        settings_layout.addLayout(tmpl_row)
 
         self.style_font = _ScrollSafeComboBox()
         self.style_font.addItems(
@@ -116,8 +126,10 @@ class VerticalActionPanelWidget(QWidget):
         self._refresh_color_btn()
         self.color_btn.clicked.connect(self._pick_color)
 
+        color_lbl = QLabel("Colour:")
+        color_lbl.setProperty("cssClass", "field_label")
         color_row = QHBoxLayout()
-        color_row.addWidget(QLabel("Colour:"))
+        color_row.addWidget(color_lbl)
         color_row.addStretch()
         color_row.addWidget(self.color_btn)
         settings_layout.addLayout(color_row)
@@ -224,8 +236,8 @@ class VerticalActionPanelWidget(QWidget):
         # Top divider
         div = QFrame()
         div.setFrameShape(QFrame.HLine)
-        div.setFrameShadow(QFrame.Plain)
-        div.setStyleSheet("border-top: 1px solid #CED4DA;")
+        div.setFrameShadow(QFrame.Sunken)
+        div.setProperty("cssClass", "divider")
         actions_layout.addWidget(div)
 
         self.generate_btn = QPushButton(" Generate PDF")
@@ -253,7 +265,13 @@ class VerticalActionPanelWidget(QWidget):
         layout.addSpacing(4)
 
     def _populate_templates(self):
-        templates_dir = get_resource_path("script") / "templates"
+        import sys
+        if getattr(sys, "frozen", False):
+            from pathlib import Path as _Path
+            templates_dir = _Path(sys.executable).parent / "templates"
+        else:
+            templates_dir = get_resource_path("script") / "templates"
+        self.style_template.clear()
         templates = sorted(p.name for p in templates_dir.glob("*.tex"))
         for tmpl in templates:
             self.style_template.addItem(tmpl)

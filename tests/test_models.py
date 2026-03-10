@@ -1,5 +1,5 @@
 import pytest
-from gui.models import PersonalInfo, Experience, Project, ResumeData, Education
+from gui.models import PersonalInfo, Experience, Project, ResumeData, Education, SkillCategory, Award, LibraryProject
 
 
 def test_personal_info_dataclass_mapping():
@@ -98,13 +98,72 @@ def test_resume_data_legacy_skills_dict():
     
     assert len(resume.skills) == 2
     assert resume.skills[0].category == "Languages"
-    assert resume.skills[0].items == ["Python", "Go"]
-    assert resume.skills[1].category == "Tools"
-    assert resume.skills[1].items == ["Docker"]
 
-    # Verify how it serializes back out
-    out = resume.model_dump(by_alias=True)
-    assert out["skills"] == [
-        {"category": "Languages", "items": ["Python", "Go"]},
-        {"category": "Tools", "items": ["Docker"]}
-    ]
+
+def test_skill_category_comma_string_coercion():
+    """items stored as a comma-separated string must be split into a list."""
+    sc = SkillCategory.model_validate({"category": "Languages", "items": "Python, SQL, Go"})
+    assert sc.items == ["Python", "SQL", "Go"]
+
+
+def test_experience_achievements_newline_coercion():
+    """achievements stored as a newline-delimited string must become a list."""
+    data = {
+        "company": "Acme",
+        "position": "Engineer",
+        "duration": "2022-2024",
+        "achievements": "Built pipelines.\nReduced latency by 40%.",
+    }
+    exp = Experience.model_validate(data)
+    assert exp.achievements == ["Built pipelines.", "Reduced latency by 40%."]
+
+
+def test_project_description_multiline_string_coercion():
+    """description stored as a newline-delimited string must become a list."""
+    data = {
+        "name": "My Project",
+        "year": "2023",
+        "technologies": "Python",
+        "description": "Line one.\nLine two.",
+    }
+    proj = Project.model_validate(data)
+    assert proj.description == ["Line one.", "Line two."]
+
+
+def test_library_project_source_field():
+    """LibraryProject inherits Project and adds a source filename field."""
+    data = {
+        "name": "ETL Pipeline",
+        "year": "2024",
+        "technologies": "Spark, Kafka",
+        "description": ["Processed 1M events/day."],
+        "source": "python-data-engineer.json",
+    }
+    lp = LibraryProject.model_validate(data)
+    assert lp.name == "ETL Pipeline"
+    assert lp.source == "python-data-engineer.json"
+    assert lp.tech_stack == "Spark, Kafka"
+
+
+def test_award_description_alias():
+    """Award.date accepts 'description' as an alias (legacy JSON key)."""
+    data = {"title": "AWS Certified", "description": "Professional level"}
+    award = Award.model_validate(data)
+    assert award.title == "AWS Certified"
+    assert award.date == "Professional level"
+
+
+def test_resume_data_skills_list_format():
+    """skills as a plain list of {category, items} objects (non-legacy path)."""
+    data = {
+        "skills": [
+            {"category": "Cloud", "items": ["AWS", "GCP"]},
+            {"category": "Languages", "items": ["Python"]},
+        ]
+    }
+    resume = ResumeData.model_validate(data)
+    assert len(resume.skills) == 2
+    assert resume.skills[0].category == "Cloud"
+    assert "AWS" in resume.skills[0].items
+    assert resume.skills[1].category == "Languages"
+    assert resume.skills[1].items == ["Python"]

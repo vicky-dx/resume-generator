@@ -7,7 +7,7 @@ import traceback
 import qasync
 from PySide6.QtWidgets import QApplication
 from gui.main_window import ResumeGeneratorMainWindow
-from gui.utils import get_base_path
+from gui.utils import get_base_path, get_resource_path
 from gui.services.file_manager import FileManager
 from gui.logger import setup_logging, app_logger
 
@@ -38,9 +38,30 @@ def main():
     loop = qasync.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    # Set modern global font
-    from PySide6.QtGui import QFont
+    # Force Fusion style with an explicit light palette so the app is immune
+    # to the OS dark-mode setting.  Without this, Windows dark mode bleeds
+    # into any Qt widget not explicitly covered by the QSS.
+    from PySide6.QtGui import QFont, QPalette, QColor
 
+    app.setStyle("Fusion")
+    _pal = QPalette()
+    _pal.setColor(QPalette.ColorRole.Window,          QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.WindowText,      QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Base,            QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.AlternateBase,   QColor("#F8F9FA"))
+    _pal.setColor(QPalette.ColorRole.ToolTipBase,     QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.ToolTipText,     QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Text,            QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Button,          QColor("#F8F9FA"))
+    _pal.setColor(QPalette.ColorRole.ButtonText,      QColor("#495057"))
+    _pal.setColor(QPalette.ColorRole.BrightText,      QColor("#e81123"))
+    _pal.setColor(QPalette.ColorRole.Highlight,       QColor("#0078d4"))
+    _pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.Link,            QColor("#0078d4"))
+    _pal.setColor(QPalette.ColorRole.PlaceholderText, QColor("#ADB5BD"))
+    app.setPalette(_pal)
+
+    # Set modern global font
     font = QFont("Segoe UI", 10)
     font.setStyleHint(QFont.StyleHint.SansSerif)
     app.setFont(font)
@@ -50,14 +71,30 @@ def main():
 
     style_path = Path(__file__).parent / "assets" / "style.qss"
     if style_path.exists():
+        assets_path = str(get_resource_path("assets")).replace("\\", "/")
         with open(style_path, "r", encoding="utf-8") as f:
-            app.setStyleSheet(f.read())
+            qss = f.read().replace("{{ASSETS}}", assets_path)
+        app.setStyleSheet(qss)
 
     # DIP: construct concrete dependencies here and inject into the window.
     project_dir = get_base_path()
     json_folder = project_dir / "job-role-json"
     json_folder.mkdir(exist_ok=True)
     (project_dir / "xelatex-resume").mkdir(exist_ok=True)
+
+    # Create a user-accessible templates folder next to the exe and seed
+    # any bundled templates into it so users can add custom .tex templates.
+    templates_dir = project_dir / "templates"
+    templates_dir.mkdir(exist_ok=True)
+    if getattr(sys, "frozen", False):
+        import shutil
+        from pathlib import Path as _Path
+        bundled_templates = _Path(sys._MEIPASS) / "script" / "templates"
+        if bundled_templates.exists():
+            for _tmpl in bundled_templates.glob("*.tex"):
+                dest = templates_dir / _tmpl.name
+                if not dest.exists():
+                    shutil.copy2(_tmpl, dest)
 
     file_manager = FileManager(json_folder)
     window = ResumeGeneratorMainWindow(file_manager=file_manager)

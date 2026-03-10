@@ -40,8 +40,22 @@ def generate_resume(
     Public API — wire dependencies and delegate to ResumeGeneratorService.
     This is the only function worker.py (and __main__) need to know about.
     """
-    script_dir = Path(__file__).resolve().parent
-    template_dir = script_dir / "templates"
+    if getattr(sys, "frozen", False):
+        # Running as compiled exe — use a templates/ folder next to the exe
+        # so users can add/edit their own templates.
+        import shutil as _shutil
+        exe_dir = Path(sys.executable).parent
+        template_dir = exe_dir / "templates"
+        template_dir.mkdir(exist_ok=True)
+        # Seed bundled templates into the folder if not already there
+        bundled = Path(sys._MEIPASS) / "script" / "templates"
+        if bundled.exists():
+            for _tmpl in bundled.glob("*.tex"):
+                if not (template_dir / _tmpl.name).exists():
+                    _shutil.copy2(_tmpl, template_dir / _tmpl.name)
+    else:
+        script_dir = Path(__file__).resolve().parent
+        template_dir = script_dir / "templates"
 
     style = StyleConfig(
         font=font,

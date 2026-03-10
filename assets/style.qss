@@ -95,9 +95,60 @@ QComboBox {
     background-color: #FFFFFF;
     border: 1px solid #CED4DA;
     border-radius: 5px;
-    padding: 3px 15px 3px 8px;
+    padding: 3px 24px 3px 8px;
     font-size: 10pt;
     min-height: 12px;
+    color: #212529;
+    selection-background-color: #0078d4;
+    selection-color: #FFFFFF;
+}
+QComboBox:hover {
+    border-color: #ADB5BD;
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #CED4DA;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    background-color: #F8F9FA;
+}
+QComboBox::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #495057;
+}
+QComboBox::down-arrow:on {
+    border-top: none;
+    border-bottom: 5px solid #495057;
+}
+/* Dropdown popup list */
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    border: 1px solid #CED4DA;
+    border-radius: 4px;
+    selection-background-color: #0078d4;
+    selection-color: #FFFFFF;
+    color: #212529;
+    padding: 2px;
+    outline: none;
+}
+QComboBox QAbstractItemView::item {
+    padding: 6px 10px;
+    min-height: 24px;
+    border-radius: 3px;
+}
+QComboBox QAbstractItemView::item:hover {
+    background-color: #E3F2FD;
+    color: #0078d4;
+}
+QComboBox QAbstractItemView::item:selected {
+    background-color: #0078d4;
+    color: #FFFFFF;
 }
 QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
     border: 1px solid #0078d4;
@@ -208,8 +259,6 @@ QWidget#actionCard {
 }
 QWidget#actionCard QLabel { 
     background: transparent; 
-    color: #343a40; 
-    font-weight: bold; 
 }
 
 /* Form Toolbar Cards */
@@ -324,6 +373,33 @@ QFrame[cssClass="divider"] {
     border: none;
     border-top: 1px solid #CED4DA;
     background: transparent;
+}
+
+/* Checkbox */
+QCheckBox {
+    color: #495057;
+    font-size: 10pt;
+    spacing: 6px;
+}
+QCheckBox::indicator {
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid #6C757D;
+    border-radius: 3px;
+    background-color: #FFFFFF;
+}
+QCheckBox::indicator:hover {
+    border-color: #0078d4;
+}
+QCheckBox::indicator:checked {
+    background-color: #0078d4;
+    border-color: #0078d4;
+    image: url({{ASSETS}}/check.svg);
+}
+QCheckBox::indicator:checked:hover {
+    background-color: #005A9E;
+    border-color: #005A9E;
+    image: url({{ASSETS}}/check.svg);
 }
 
 /* Generation Progress — floating overlay */

@@ -8,9 +8,14 @@ dependencies = [
     "pydantic>=2.0.0",
     "pygments>=2.15.0",
     "pyside6>=6.6.0",
+    "pytest>=9.0.2",
     "qasync>=0.28.0",
     "qtawesome>=1.4.1",
+    "rapidfuzz>=3.14.3",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [dependency-groups]
 dev = [

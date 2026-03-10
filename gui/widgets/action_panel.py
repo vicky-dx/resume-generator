@@ -50,15 +50,26 @@ class ActionPanelWidget(QWidget):
         style_lbl.setProperty("cssClass", "field_label")
         r1.addWidget(style_lbl)
 
-        r1.addWidget(QLabel("Template:"))
+        def _hint(text):
+            lbl = QLabel(text)
+            lbl.setProperty("cssClass", "field_label")
+            return lbl
+
+        r1.addWidget(_hint("Template:"))
         self.style_template = QComboBox()
         self._populate_templates()
         set_custom_tooltip(
             self.style_template, "Choose the visual layout template for the PDF."
         )
         r1.addWidget(self.style_template)
+        _refresh_tmpl_btn = QPushButton("↺")
+        _refresh_tmpl_btn.setFixedSize(24, 24)
+        _refresh_tmpl_btn.setProperty("cssClass", "icon")
+        set_custom_tooltip(_refresh_tmpl_btn, "Rescan templates folder")
+        _refresh_tmpl_btn.clicked.connect(self._populate_templates)
+        r1.addWidget(_refresh_tmpl_btn)
 
-        r1.addWidget(QLabel("Font:"))
+        r1.addWidget(_hint("Font:"))
         self.style_font = QComboBox()
         self.style_font.addItems(
             ["Calibri", "Arial", "Georgia", "Times New Roman", "Verdana"]
@@ -68,7 +79,7 @@ class ActionPanelWidget(QWidget):
         )
         r1.addWidget(self.style_font)
 
-        r1.addWidget(QLabel("Size:"))
+        r1.addWidget(_hint("Size:"))
         self.style_size = QComboBox()
         self.style_size.addItems(
             [str(s) for s in [9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0]]
@@ -77,7 +88,7 @@ class ActionPanelWidget(QWidget):
         set_custom_tooltip(self.style_size, "Base font size in points (e.g. 11.5pt).")
         r1.addWidget(self.style_size)
 
-        r1.addWidget(QLabel("Colour:"))
+        r1.addWidget(_hint("Colour:"))
         self.color_btn = QPushButton()
         self.color_btn.setFixedSize(32, 28)
         set_custom_tooltip(self.color_btn, "Pick section heading colour")
@@ -96,21 +107,21 @@ class ActionPanelWidget(QWidget):
         layout_lbl.setProperty("cssClass", "field_label")
         r2.addWidget(layout_lbl)
 
-        r2.addWidget(QLabel("Margins (in) - TB:"))
+        r2.addWidget(_hint("Margins (in) - TB:"))
         self.margin_tb = QComboBox()
         self.margin_tb.addItems(["0.3", "0.4", "0.5", "0.6", "0.7", "0.8"])
         self.margin_tb.setCurrentIndex(2)  # default 0.5 in
         set_custom_tooltip(self.margin_tb, "Top and Bottom page margins in inches.")
         r2.addWidget(self.margin_tb)
 
-        r2.addWidget(QLabel("LR:"))
+        r2.addWidget(_hint("LR:"))
         self.margin_lr = QComboBox()
         self.margin_lr.addItems(["0.4", "0.5", "0.6", "0.7", "0.8", "0.9"])
         self.margin_lr.setCurrentIndex(1)  # default 0.6 in
         set_custom_tooltip(self.margin_lr, "Left and Right page margins in inches.")
         r2.addWidget(self.margin_lr)
 
-        r2.addWidget(QLabel("  Gaps (pt) - Section:"))
+        r2.addWidget(_hint("  Gaps (pt) - Section:"))
         self.section_spacing = QComboBox()
         self.section_spacing.addItems(["4", "6", "8", "10", "12", "14"])
         self.section_spacing.setCurrentIndex(2)  # default 10pt
@@ -120,7 +131,7 @@ class ActionPanelWidget(QWidget):
         )
         r2.addWidget(self.section_spacing)
 
-        r2.addWidget(QLabel("Entry:"))
+        r2.addWidget(_hint("Entry:"))
         self.entry_spacing = QComboBox()
         self.entry_spacing.addItems(["4", "6", "8", "10", "12", "14"])
         self.entry_spacing.setCurrentIndex(2)  # default 8pt
@@ -130,7 +141,7 @@ class ActionPanelWidget(QWidget):
         )
         r2.addWidget(self.entry_spacing)
 
-        r2.addWidget(QLabel("Line Spacing:"))
+        r2.addWidget(_hint("Line Spacing:"))
         self.style_spacing = QComboBox()
         self.style_spacing.addItems(["0", "0.3", "0.5", "0.8", "1.0", "1.5", "2.0"])
         self.style_spacing.setCurrentIndex(2)  # default 0.5pt
@@ -150,7 +161,7 @@ class ActionPanelWidget(QWidget):
         list_lbl.setProperty("cssClass", "field_label")
         r3.addWidget(list_lbl)
 
-        r3.addWidget(QLabel("Bullet:"))
+        r3.addWidget(_hint("Bullet:"))
         self.style_bullet = QComboBox()
         self.style_bullet.addItems(
             ["•  bullet", "–  dash", "›  arrow", "→  right arrow"]
@@ -160,7 +171,7 @@ class ActionPanelWidget(QWidget):
         )
         r3.addWidget(self.style_bullet)
 
-        r3.addWidget(QLabel("Indent:"))
+        r3.addWidget(_hint("Indent:"))
         self.bullet_indent = QComboBox()
         self.bullet_indent.addItems(["0.2", "0.4", "0.6", "0.8", "1.0", "1.2", "1.5"])
         self.bullet_indent.setCurrentIndex(5)  # default 1.2em
@@ -174,7 +185,7 @@ class ActionPanelWidget(QWidget):
         self.icons_chk.setChecked(True)  # Enable icons by default
         r3.addWidget(self.icons_chk)
 
-        r3.addWidget(QLabel("  Protect:"))
+        r3.addWidget(_hint("  Protect:"))
         self.extra_terms_input = QLineEdit()
         self.extra_terms_input.setPlaceholderText("e.g. React, AWS")
         self.extra_terms_input.setMinimumWidth(150)
@@ -185,11 +196,10 @@ class ActionPanelWidget(QWidget):
 
         main_layout.addWidget(settings_widget, stretch=1)
 
-        # Divider line
+        # Vertical divider between settings and actions
         div = QFrame()
         div.setFrameShape(QFrame.VLine)
-        div.setFrameShadow(QFrame.Plain)
-        div.setStyleSheet("border-left: 1px solid #CED4DA;")
+        div.setFrameShadow(QFrame.Sunken)
         main_layout.addWidget(div)
 
         # ── Actions Area (Right) ────────────────────────────
@@ -229,7 +239,13 @@ class ActionPanelWidget(QWidget):
 
     def _populate_templates(self):
         """Scan and populate .tex templates."""
-        templates_dir = get_resource_path("script") / "templates"
+        import sys
+        if getattr(sys, "frozen", False):
+            from pathlib import Path as _Path
+            templates_dir = _Path(sys.executable).parent / "templates"
+        else:
+            templates_dir = get_resource_path("script") / "templates"
+        self.style_template.clear()
         templates = sorted(p.name for p in templates_dir.glob("*.tex"))
         for tmpl in templates:
             self.style_template.addItem(tmpl)
