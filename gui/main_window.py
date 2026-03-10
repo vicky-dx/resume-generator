@@ -451,9 +451,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
     def _trigger_update_check(self):
         """Kick off the async update check from a QTimer callback."""
-        asyncio.ensure_future(self._check_for_update())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._check_for_update())
 
-    @asyncSlot()
     async def _check_for_update(self):
         """Fetch latest GitHub release; show banner if a newer version exists."""
         try:
