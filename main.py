@@ -31,6 +31,14 @@ def main():
     setup_logging()
     _install_excepthook()
 
+    # Tell Windows to use our AppUserModelID so the taskbar shows our icon
+    # instead of the generic Python/Qt default.
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "ResumeAutomation.ResumeGenerator.1"
+        )
+
     app_logger.info("Launching QApplication")
     app = QApplication(sys.argv)
     app.setApplicationName("Resume Generator")
@@ -98,6 +106,15 @@ def main():
 
     file_manager = FileManager(json_folder)
     window = ResumeGeneratorMainWindow(file_manager=file_manager)
+
+    # Set app-level icon so Windows taskbar picks it up
+    from PySide6.QtGui import QIcon
+    _icon_path = get_resource_path("assets") / "cv.ico"
+    if not _icon_path.exists():
+        _icon_path = get_resource_path("assets") / "cv.png"
+    if _icon_path.exists():
+        app.setWindowIcon(QIcon(str(_icon_path)))
+
     window.show()
 
     with loop:
