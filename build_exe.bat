@@ -39,13 +39,8 @@ echo.
 :: ── run PyInstaller ───────────────────────────────────────────
 echo [3/3] Running PyInstaller...
 echo.
-uv run pyinstaller --noconfirm --windowed --onefile ^
-    --name "ResumeGenerator" ^
-    --icon "assets\cv.ico" ^
-    --add-data "assets;assets" ^
-    --add-data "script/templates;script/templates" ^
-    --add-data "job-role-json;job-role-json" ^
-    main.py
+uv run python build_version_info.py
+uv run pyinstaller --noconfirm ResumeGenerator.spec
 
 if errorlevel 1 (
     echo.

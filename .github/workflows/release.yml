@@ -39,6 +39,7 @@ jobs:
       - name: Build executable with PyInstaller
         run: |
           New-Item -ItemType Directory -Force -Path job-role-json | Out-Null
+          uv run python build_version_info.py
           uv run pyinstaller ResumeGenerator.spec
         shell: pwsh
 
