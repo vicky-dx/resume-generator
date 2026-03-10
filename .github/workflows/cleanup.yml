@@ -1,0 +1,20 @@
+name: Cleanup old workflow runs
+
+on:
+  workflow_run:
+    workflows: ["Build & Release"]
+    types: [completed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete old workflow runs (keep last 5)
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 5
