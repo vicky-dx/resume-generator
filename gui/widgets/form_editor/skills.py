@@ -8,7 +8,7 @@ class SkillsWidget(ListBasedSectionWidget):
     """Widget for editing skills categories."""
 
     def __init__(self, parent=None):
-        super().__init__(list_title="Categories:", item_name="Category", parent=parent)
+        super().__init__(list_title="Skills:", item_name="Category", parent=parent)
 
     def _setup_form(self, form_layout):
         self.cat_edit = QLineEdit()
