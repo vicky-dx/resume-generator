@@ -4,20 +4,23 @@ from pathlib import Path
 
 
 def _read_version() -> str:
-    """In dev mode, read version from pyproject.toml automatically.
-    In a frozen EXE, pyproject.toml is absent so we use the fallback value
-    that CI patches before running PyInstaller."""
-    if not getattr(sys, "frozen", False):
+    """Read version from pyproject.toml — works in both dev and frozen EXE.
+    Frozen EXE has pyproject.toml bundled via the spec file.
+    Falls back to the hardcoded string only if the file is missing."""
+    candidates = [
+        Path(__file__).parent.parent / "pyproject.toml",  # dev
+        Path(getattr(sys, "_MEIPASS", "")) / "pyproject.toml",  # frozen EXE
+    ]
+    for toml in candidates:
         try:
-            toml = Path(__file__).parent.parent / "pyproject.toml"
             m = re.search(
                 r'^version\s*=\s*"([^"]+)"', toml.read_text("utf-8"), re.M
             )
             if m:
                 return m.group(1)
         except Exception:
-            pass
-    return "1.0.0"  # CI patches this line before building the EXE
+            continue
+    return "1.0.0"  # last-resort fallback
 
 
 APP_VERSION = _read_version()

@@ -31,14 +31,10 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
-          # Patch pyproject.toml
+          # Patch pyproject.toml — the EXE reads version from this bundled file
           (Get-Content pyproject.toml -Raw) `
             -replace '(?m)^version = "[\d.]+"', "version = `"$version`"" `
             | Set-Content pyproject.toml
-          # Patch the frozen-EXE fallback in gui/config.py
-          (Get-Content gui\config.py -Raw) `
-            -replace 'return "[\d.]+"  # CI patches this line before building the EXE', "return `"$version`"  # CI patches this line before building the EXE" `
-            | Set-Content gui\config.py
 
       - name: Build executable with PyInstaller
         run: |
