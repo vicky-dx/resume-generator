@@ -23,7 +23,7 @@ jobs:
         run: pip install uv
 
       - name: Install project dependencies (including dev)
-        run: uv sync
+        run: uv sync --all-groups
 
       - name: Inject version from tag
         shell: pwsh
@@ -39,7 +39,10 @@ jobs:
             | Set-Content gui\config.py
 
       - name: Build executable with PyInstaller
-        run: uv run pyinstaller ResumeGenerator.spec
+        run: |
+          New-Item -ItemType Directory -Force -Path job-role-json | Out-Null
+          uv run pyinstaller ResumeGenerator.spec
+        shell: pwsh
 
       - name: Rename artifact with version tag
         shell: pwsh
