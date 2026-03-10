@@ -49,10 +49,19 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: ── rename output with version ────────────────────────────────
+for /f "tokens=2 delims==" %%v in ('findstr /r "^version" pyproject.toml') do (
+    set RAW=%%v
+)
+:: strip spaces and quotes
+set VERSION=%RAW: =%
+set VERSION=%VERSION:"=%
+rename "dist\ResumeGenerator.exe" "ResumeGenerator-v%VERSION%.exe"
+
 echo.
 echo ============================================================
 echo  Done!  Find your exe at:
-echo  %~dp0dist\ResumeGenerator.exe
+echo  %~dp0dist\ResumeGenerator-v%VERSION%.exe
 echo ============================================================
 pause
 
