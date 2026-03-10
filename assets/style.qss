@@ -429,6 +429,39 @@ QLabel#progressLabel {
     font-style: italic;
 }
 
+/* ── Update notification banner ────────────────────────────────────── */
+QFrame#updateBar {
+    background-color: #dff0ff;
+    border: 1px solid #0078d4;
+    border-radius: 6px;
+}
+QLabel#updateLabel {
+    color: #004578;
+    font-size: 9pt;
+}
+QPushButton#updateDownloadBtn {
+    background-color: #0078d4;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 9pt;
+}
+QPushButton#updateDownloadBtn:hover {
+    background-color: #106ebe;
+}
+QPushButton#updateDismissBtn {
+    background-color: transparent;
+    color: #0078d4;
+    border: 1px solid #0078d4;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 9pt;
+}
+QPushButton#updateDismissBtn:hover {
+    background-color: #e1f0fb;
+}
+
 /* Duration Picker */
 QLabel#durationSep {
     color: #495057;

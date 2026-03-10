@@ -1,3 +1,29 @@
+import sys
+import re
+from pathlib import Path
+
+
+def _read_version() -> str:
+    """In dev mode, read version from pyproject.toml automatically.
+    In a frozen EXE, pyproject.toml is absent so we use the fallback value
+    that CI patches before running PyInstaller."""
+    if not getattr(sys, "frozen", False):
+        try:
+            toml = Path(__file__).parent.parent / "pyproject.toml"
+            m = re.search(
+                r'^version\s*=\s*"([^"]+)"', toml.read_text("utf-8"), re.M
+            )
+            if m:
+                return m.group(1)
+        except Exception:
+            pass
+    return "1.0.0"  # CI patches this line before building the EXE
+
+
+APP_VERSION = _read_version()
+GITHUB_REPO = "vicky-dx/resume-generator"
+
+
 class UIConfig:
     """UI Configuration constants"""
 

@@ -16,9 +16,11 @@ from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication
 
-from gui.config import UIConfig
+from gui.config import UIConfig, APP_VERSION, GITHUB_REPO
 from gui.utils import get_base_path, get_resource_path
 from gui.protocols import IFileManager
+from gui.services.update_checker import check_for_update
+import webbrowser
 from qasync import asyncSlot
 from gui.ui_helpers import get_icon
 from gui.worker import AsyncGenerationWorker
@@ -48,6 +50,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
         # Initial data load
         self.refresh_templates()
+
+        # Check for updates 3 s after startup so it never delays boot
+        QTimer.singleShot(3000, self._trigger_update_check)
 
     def _setup_paths(self):
         self.project_dir = get_base_path()
@@ -92,6 +97,27 @@ class ResumeGeneratorMainWindow(QMainWindow):
             6,
         )
         main_layout.setSpacing(UIConfig.PAD_SECTION)
+
+        # ── Update notification banner (hidden until an update is found) ──
+        self._update_bar = QFrame()
+        self._update_bar.setObjectName("updateBar")
+        self._update_bar.setVisible(False)
+        _bar_layout = QHBoxLayout(self._update_bar)
+        _bar_layout.setContentsMargins(12, 6, 12, 6)
+        _bar_layout.setSpacing(8)
+        self._update_label = QLabel()
+        self._update_label.setObjectName("updateLabel")
+        _bar_layout.addWidget(self._update_label, stretch=1)
+        self._update_download_btn = QPushButton("Download")
+        self._update_download_btn.setObjectName("updateDownloadBtn")
+        self._update_download_btn.setFixedHeight(24)
+        _bar_layout.addWidget(self._update_download_btn)
+        _dismiss_btn = QPushButton("Dismiss")
+        _dismiss_btn.setObjectName("updateDismissBtn")
+        _dismiss_btn.setFixedHeight(24)
+        _dismiss_btn.clicked.connect(lambda: self._update_bar.setVisible(False))
+        _bar_layout.addWidget(_dismiss_btn)
+        main_layout.addWidget(self._update_bar)
 
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
@@ -420,3 +446,29 @@ class ResumeGeneratorMainWindow(QMainWindow):
                 subprocess.Popen(["xdg-open", path])
         except Exception as e:
             self.show_message(f"Could not open folder: {e}", "error")
+
+    # ── Update checker ────────────────────────────────────────────────────────
+
+    def _trigger_update_check(self):
+        """Kick off the async update check from a QTimer callback."""
+        asyncio.ensure_future(self._check_for_update())
+
+    @asyncSlot()
+    async def _check_for_update(self):
+        """Fetch latest GitHub release; show banner if a newer version exists."""
+        try:
+            info = await check_for_update(GITHUB_REPO, APP_VERSION)
+            if info:
+                self._show_update_banner(info["version"], info["url"])
+        except Exception:
+            pass  # update check is best-effort; never crash the app
+
+    def _show_update_banner(self, version: str, url: str):
+        self._update_label.setText(
+            f"<b>Update available — v{version}</b>  "
+            f"(you have v{APP_VERSION}). Download the latest build from GitHub."
+        )
+        self._update_download_btn.clicked.connect(
+            lambda: webbrowser.open(url)
+        )
+        self._update_bar.setVisible(True)
