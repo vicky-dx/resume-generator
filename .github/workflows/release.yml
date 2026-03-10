@@ -27,15 +27,6 @@ jobs:
       - name: Install project dependencies (including dev)
         run: uv sync --all-groups
 
-      - name: Inject version from tag
-        shell: pwsh
-        run: |
-          $version = "${{ github.ref_name }}".TrimStart("v")
-          # Patch pyproject.toml — the EXE reads version from this bundled file
-          (Get-Content pyproject.toml -Raw) `
-            -replace '(?m)^version = "[\d.]+"', "version = `"$version`"" `
-            | Set-Content pyproject.toml
-
       - name: Build executable with PyInstaller
         run: |
           New-Item -ItemType Directory -Force -Path job-role-json | Out-Null
