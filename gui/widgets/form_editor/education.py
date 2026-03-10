@@ -15,7 +15,7 @@ class EducationWidget(ListBasedSectionWidget):
     """Widget for editing education."""
 
     def __init__(self, parent=None):
-        super().__init__(list_title="Entries:", item_name="Entry", parent=parent)
+        super().__init__(list_title="Education:", item_name="Entry", parent=parent)
 
     def _setup_form(self, form_layout):
         self.edu_institution = QLineEdit()

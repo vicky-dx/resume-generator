@@ -3,20 +3,24 @@
 Run this before PyInstaller to embed proper Windows file metadata
 (visible in Properties → Details on right-click).
 """
+
 import re
 import sys
 from pathlib import Path
+
 
 def _read_version() -> str:
     toml = Path(__file__).parent / "pyproject.toml"
     m = re.search(r'^version\s*=\s*"([^"]+)"', toml.read_text("utf-8"), re.M)
     return m.group(1) if m else "1.0.0"
 
+
 def _parse_tuple(version: str):
     parts = [int(x) for x in version.split(".")]
     while len(parts) < 4:
         parts.append(0)
     return tuple(parts[:4])
+
 
 def generate(version: str | None = None):
     v = version or _read_version()
@@ -52,6 +56,7 @@ def generate(version: str | None = None):
     out = Path(__file__).parent / "version_info.txt"
     out.write_text(content, encoding="utf-8")
     print(f"Generated version_info.txt  →  {v}")
+
 
 if __name__ == "__main__":
     ver = sys.argv[1] if len(sys.argv) > 1 else None

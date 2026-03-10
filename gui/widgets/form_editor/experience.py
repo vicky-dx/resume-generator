@@ -23,7 +23,7 @@ class ExperienceWidget(ListBasedSectionWidget):
     """Widget for editing work experience."""
 
     def __init__(self, parent=None):
-        super().__init__(list_title="Entries:", item_name="Entry", parent=parent)
+        super().__init__(list_title="Experience:", item_name="Entry", parent=parent)
 
     def _setup_form(self, form_layout):
         self.exp_company = QLineEdit()

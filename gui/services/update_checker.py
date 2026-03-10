@@ -6,6 +6,7 @@ Usage:
     if info:
         # info = {"version": "1.2.0", "url": "https://...", "body": "..."}
 """
+
 import asyncio
 import json
 import urllib.request
@@ -53,8 +54,6 @@ async def check_for_update(repo: str, current_version: str) -> Optional[dict]:
 def _version_gt(a: str, b: str) -> bool:
     """Return True if version string *a* is greater than *b* (semver-style)."""
     try:
-        return tuple(int(x) for x in a.split(".")) > tuple(
-            int(x) for x in b.split(".")
-        )
+        return tuple(int(x) for x in a.split(".")) > tuple(int(x) for x in b.split("."))
     except ValueError:
         return False

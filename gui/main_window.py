@@ -468,7 +468,5 @@ class ResumeGeneratorMainWindow(QMainWindow):
             f"<b>Update available — v{version}</b>  "
             f"(you have v{APP_VERSION}). Download the latest build from GitHub."
         )
-        self._update_download_btn.clicked.connect(
-            lambda: webbrowser.open(url)
-        )
+        self._update_download_btn.clicked.connect(lambda: webbrowser.open(url))
         self._update_bar.setVisible(True)

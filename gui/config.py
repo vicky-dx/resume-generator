@@ -13,9 +13,7 @@ def _read_version() -> str:
     ]
     for toml in candidates:
         try:
-            m = re.search(
-                r'^version\s*=\s*"([^"]+)"', toml.read_text("utf-8"), re.M
-            )
+            m = re.search(r'^version\s*=\s*"([^"]+)"', toml.read_text("utf-8"), re.M)
             if m:
                 return m.group(1)
         except Exception:

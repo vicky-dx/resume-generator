@@ -35,6 +35,7 @@ def main():
     # instead of the generic Python/Qt default.
     if sys.platform == "win32":
         import ctypes
+
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
             "ResumeAutomation.ResumeGenerator.1"
         )
@@ -53,19 +54,19 @@ def main():
 
     app.setStyle("Fusion")
     _pal = QPalette()
-    _pal.setColor(QPalette.ColorRole.Window,          QColor("#ffffff"))
-    _pal.setColor(QPalette.ColorRole.WindowText,      QColor("#212529"))
-    _pal.setColor(QPalette.ColorRole.Base,            QColor("#ffffff"))
-    _pal.setColor(QPalette.ColorRole.AlternateBase,   QColor("#F8F9FA"))
-    _pal.setColor(QPalette.ColorRole.ToolTipBase,     QColor("#ffffff"))
-    _pal.setColor(QPalette.ColorRole.ToolTipText,     QColor("#212529"))
-    _pal.setColor(QPalette.ColorRole.Text,            QColor("#212529"))
-    _pal.setColor(QPalette.ColorRole.Button,          QColor("#F8F9FA"))
-    _pal.setColor(QPalette.ColorRole.ButtonText,      QColor("#495057"))
-    _pal.setColor(QPalette.ColorRole.BrightText,      QColor("#e81123"))
-    _pal.setColor(QPalette.ColorRole.Highlight,       QColor("#0078d4"))
+    _pal.setColor(QPalette.ColorRole.Window, QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.WindowText, QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.AlternateBase, QColor("#F8F9FA"))
+    _pal.setColor(QPalette.ColorRole.ToolTipBase, QColor("#ffffff"))
+    _pal.setColor(QPalette.ColorRole.ToolTipText, QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Text, QColor("#212529"))
+    _pal.setColor(QPalette.ColorRole.Button, QColor("#F8F9FA"))
+    _pal.setColor(QPalette.ColorRole.ButtonText, QColor("#495057"))
+    _pal.setColor(QPalette.ColorRole.BrightText, QColor("#e81123"))
+    _pal.setColor(QPalette.ColorRole.Highlight, QColor("#0078d4"))
     _pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
-    _pal.setColor(QPalette.ColorRole.Link,            QColor("#0078d4"))
+    _pal.setColor(QPalette.ColorRole.Link, QColor("#0078d4"))
     _pal.setColor(QPalette.ColorRole.PlaceholderText, QColor("#ADB5BD"))
     app.setPalette(_pal)
 
@@ -97,6 +98,7 @@ def main():
     if getattr(sys, "frozen", False):
         import shutil
         from pathlib import Path as _Path
+
         bundled_templates = _Path(sys._MEIPASS) / "script" / "templates"
         if bundled_templates.exists():
             for _tmpl in bundled_templates.glob("*.tex"):
@@ -109,6 +111,7 @@ def main():
 
     # Set app-level icon so Windows taskbar picks it up
     from PySide6.QtGui import QIcon
+
     _icon_path = get_resource_path("assets") / "cv.ico"
     if not _icon_path.exists():
         _icon_path = get_resource_path("assets") / "cv.png"
