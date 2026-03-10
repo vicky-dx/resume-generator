@@ -7,7 +7,6 @@ JinjaLatexDocumentBuilder — IDocumentBuilder implementation (DIP: deps injecte
 build_jinja_env         — factory that constructs the raw jinja2.Environment
 """
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Tuple
@@ -15,31 +14,6 @@ from typing import Tuple
 import jinja2
 
 from script.protocols import IEscaper
-
-
-# ── Helper filters (pure functions, no class state needed) ────────────────
-
-
-def _split_company_name(raw: str) -> str:
-    if ", " in raw:
-        return raw.rsplit(", ", 1)[0].strip()
-    return raw.strip()
-
-
-def _split_company_city(raw: str) -> str:
-    if ", " in raw:
-        return raw.rsplit(", ", 1)[1].strip()
-    return ""
-
-
-def _split_position_title(raw: str) -> str:
-    m = re.search(r"\(([^)]+)\)$", raw.strip())
-    return raw[: m.start()].strip() if m else raw.strip()
-
-
-def _split_position_type(raw: str) -> str:
-    m = re.search(r"\(([^)]+)\)$", raw.strip())
-    return m.group(1) if m else ""
 
 
 # ── StyleConfig ───────────────────────────────────────────────────────────
@@ -90,10 +64,6 @@ class JinjaEnvConfigurator:
             return val
 
         env.filters["escape_latex"] = recursive_escape
-        env.filters["split_company_name"] = _split_company_name
-        env.filters["split_company_city"] = _split_company_city
-        env.filters["split_position_title"] = _split_position_title
-        env.filters["split_position_type"] = _split_position_type
 
         # ── globals (style params available to every template) ────────────
         env.globals["font"] = style.font

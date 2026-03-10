@@ -58,14 +58,15 @@
 \vspace{4pt}
 \begin{tabular*}{\textwidth}{@{} l @{\extracolsep{\fill}} r @{}}
 \begin{tabular}[t]{@{}l@{}}
-<% if personal_info.location %><% if use_icons %>{\textcolor{iconlocation}{\faIcon{map-marker-alt}}}\ <% endif %><< personal_info.location >> \\<% endif %>
-<% if use_icons %>{\textcolor{iconphone}{\faIcon{phone}}}\ <% endif %><< personal_info.phone >> \\
-<% if use_icons %>{\textcolor{iconmail}{\faIcon{envelope}}}\ <% endif %><< personal_info.email >>
+<% if personal_info.location %><% if use_icons %>\makebox[1.1em][c]{\textcolor{iconlocation}{\faIcon{map-marker-alt}}}\ <% endif %><< personal_info.location >> \\<% endif %>
+<% if use_icons %>\makebox[1.1em][c]{\textcolor{iconphone}{\faIcon{phone}}}\ <% endif %><< personal_info.phone >> \\
+<% if use_icons %>\makebox[1.1em][c]{\textcolor{iconmail}{\faIcon{envelope}}}\ <% endif %><< personal_info.email >>
 \end{tabular}
 &
-\begin{tabular}[t]{@{}r@{}}
-<% if personal_info.github %>\href{<< personal_info.github >>}{<% if use_icons %>{\textcolor{githubdark}{\faIcon{github}}}\ <% endif %>github.com/<< personal_info.github.rstrip('/').split('/')[-1] >>} \\<% endif %>
-<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<% if use_icons %>{\textcolor{linkedinblue}{\faIcon{linkedin}}}\ <% endif %>linkedin.com/in/<< personal_info.linkedin.rstrip('/').split('/')[-1] >>} \\<% endif %>
+\begin{tabular}[t]{@{}l@{}}
+\\
+<% if personal_info.github %>\href{<< personal_info.github >>}{<% if use_icons %>\makebox[1.1em][c]{\textcolor{githubdark}{\faIcon{github}}}\ <% endif %>github.com/<< personal_info.github.rstrip('/').split('/')[-1] >>} \\<% endif %>
+<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<% if use_icons %>\makebox[1.1em][c]{\textcolor{linkedinblue}{\faIcon{linkedin}}}\ <% endif %>linkedin.com/in/<< personal_info.linkedin.rstrip('/').split('/')[-1] >>} \\<% endif %>
 \end{tabular}
 \end{tabular*}
 <% endif %>
@@ -91,8 +92,8 @@
 \vspace{<< entry_spacing >>pt}
 <% endif %>
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
-\textbf{<< exp.position | split_position_title >>} & \textbf{<< exp.company | split_company_name >>} & \textbf{<< exp.duration >>} \\
-\textit{<< exp.position | split_position_type >>} & \textit{<< exp.company | split_company_city >>} & \\
+\textbf{<< exp.position >>} & \textbf{<< exp.company >>} & \textbf{<< exp.duration >>} \\
+\textit{<< exp.work_type >>} & \textit{<< exp.location >>} & \\
 \end{tabular*}
 
 \begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
@@ -121,12 +122,12 @@
 <% for edu in education %>
 
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r}
-\textbf{<< edu.institution >>} & \textbf{<< edu.duration >>} \\
-<< edu.degree >> & << edu.gpa | default("") >> \\
+\textbf{<< edu.degree >>} & \textbf{<< edu.duration >>} \\
+<< edu.institution >><% if edu.location %>, \textit{<< edu.location >>}<% endif %> & << edu.gpa | default("") >> \\
 \end{tabular*}
 <% set _cw = edu.get("Relevant coursework") or edu.get("coursework") %>
 <% if _cw %>
-\noindent{\small \textit{\textbf{Relevant coursework:}} << _cw | join(", ") if _cw is iterable and _cw is not string else _cw >>}
+\noindent{\small \textit{\textbf{Relevant coursework:}} {\raggedright << _cw | join(", ") >>\par}}
 <% endif %>
 <% endfor %>
 <% endif %>

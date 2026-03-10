@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QApplication,
+    QFileDialog,
+    QMessageBox,
 )
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
@@ -70,6 +72,12 @@ class QuickCreateTab(QWidget):
         json_buttons = QHBoxLayout()
         json_buttons.setSpacing(UIConfig.PAD_SMALL)
 
+        open_btn = QPushButton(" Open JSON")
+        open_btn.setIcon(get_icon(UIConfig.ICON_FOLDER))
+        open_btn.setToolTip("Open a JSON file from disk")
+        open_btn.clicked.connect(self._on_open_clicked)
+        json_buttons.addWidget(open_btn)
+
         paste_btn = QPushButton(" Paste")
         paste_btn.setIcon(get_icon(UIConfig.ICON_PASTE))
         paste_btn.clicked.connect(self.paste_from_clipboard)
@@ -85,7 +93,7 @@ class QuickCreateTab(QWidget):
         json_buttons.addWidget(save_btn)
 
         clear_btn = QPushButton(" Clear")
-        clear_btn.setIcon(get_icon(UIConfig.ICON_TRASH, color="white"))
+        clear_btn.setIcon(get_icon(UIConfig.ICON_TRASH))
         clear_btn.clicked.connect(self.clear_editor)
         json_buttons.addWidget(clear_btn)
 
@@ -94,6 +102,32 @@ class QuickCreateTab(QWidget):
 
         self.setMinimumHeight(400)
         self.current_editing_file = None
+
+    def _on_open_clicked(self):
+        """Open a JSON file from disk and load it into the editor."""
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open JSON Resume",
+            "",
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except OSError as e:
+            QMessageBox.critical(self, "Open Failed", f"Could not read file:\n{e}")
+            return
+
+        # Auto-fill resume name from filename (strip extension)
+        import os
+
+        stem = os.path.splitext(os.path.basename(path))[0]
+        if not self.resume_name_input.text().strip():
+            self.resume_name_input.setText(stem)
+
+        self.json_editor.setPlainText(content)
 
     def paste_from_clipboard(self):
         clipboard = QApplication.clipboard()

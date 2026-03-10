@@ -1,15 +1,15 @@
-import re
-from PySide6.QtWidgets import QLineEdit, QTextEdit, QLabel
+from PySide6.QtWidgets import (
+    QLineEdit,
+    QTextEdit,
+    QLabel,
+    QHBoxLayout,
+    QVBoxLayout,
+    QComboBox,
+)
 
 from gui.widgets.form_editor.base import ListBasedSectionWidget
+from gui.widgets.form_editor.duration_picker import DurationPickerWidget
 from gui.models import Experience
-
-# e.g. "Jan 2023 – Present", "Feb 2022 - Mar 2024", "2021 - 2022"
-_DURATION_RE = re.compile(
-    r"^[A-Za-z]{3}\s+\d{4}\s*[–\-]\s*([A-Za-z]{3}\s+\d{4}|Present|present|Current|current)"
-    r"|^\d{4}\s*[–\-]\s*(\d{4}|Present|present)$",
-    re.IGNORECASE,
-)
 
 
 def _set_valid(widget, valid: bool) -> None:
@@ -27,11 +27,14 @@ class ExperienceWidget(ListBasedSectionWidget):
 
     def _setup_form(self, form_layout):
         self.exp_company = QLineEdit()
-        self.exp_company.setPlaceholderText("Company Name, City")
+        self.exp_company.setPlaceholderText("Company Name")
+        self.exp_location = QLineEdit()
+        self.exp_location.setPlaceholderText("City, Country")
+        self.exp_work_type = QComboBox()
+        self.exp_work_type.addItems(["", "On-Site", "Hybrid", "Remote", "Freelance"])
         self.exp_position = QLineEdit()
         self.exp_position.setPlaceholderText("Job Title")
-        self.exp_duration = QLineEdit()
-        self.exp_duration.setPlaceholderText("Jan 2023 – Present")
+        self.exp_duration = DurationPickerWidget()
 
         self.exp_achievements = QTextEdit()
         self.exp_achievements.setPlaceholderText(
@@ -39,7 +42,36 @@ class ExperienceWidget(ListBasedSectionWidget):
         )
         self.exp_achievements.setMinimumHeight(380)
 
-        self._add_field(form_layout, "Company", self.exp_company)
+        # Three-column row: Company Name | Location | Work Type
+        company_row = QHBoxLayout()
+        company_row.setSpacing(8)
+
+        company_col = QVBoxLayout()
+        company_col.setSpacing(4)
+        company_lbl = QLabel("Company")
+        company_lbl.setProperty("cssClass", "field_label")
+        company_col.addWidget(company_lbl)
+        company_col.addWidget(self.exp_company)
+
+        location_col = QVBoxLayout()
+        location_col.setSpacing(4)
+        location_lbl = QLabel("Location")
+        location_lbl.setProperty("cssClass", "field_label")
+        location_col.addWidget(location_lbl)
+        location_col.addWidget(self.exp_location)
+
+        work_type_col = QVBoxLayout()
+        work_type_col.setSpacing(4)
+        work_type_lbl = QLabel("Work Type")
+        work_type_lbl.setProperty("cssClass", "field_label")
+        work_type_col.addWidget(work_type_lbl)
+        work_type_col.addWidget(self.exp_work_type)
+
+        company_row.addLayout(company_col, 3)
+        company_row.addLayout(location_col, 2)
+        company_row.addLayout(work_type_col, 1)
+        form_layout.addLayout(company_row)
+
         self._add_field(form_layout, "Position", self.exp_position)
         self._add_field(form_layout, "Duration", self.exp_duration)
         self._add_rich_text_field(
@@ -54,7 +86,9 @@ class ExperienceWidget(ListBasedSectionWidget):
         self.exp_position.textChanged.connect(
             lambda t: _set_valid(self.exp_position, bool(t.strip()))
         )
-        self.exp_duration.textChanged.connect(self._validate_duration)
+        self.exp_duration.textChanged.connect(
+            lambda t: _set_valid(self.exp_duration, bool(t.strip()))
+        )
         self.exp_achievements.textChanged.connect(
             lambda: _set_valid(
                 self.exp_achievements,
@@ -62,16 +96,11 @@ class ExperienceWidget(ListBasedSectionWidget):
             )
         )
 
-    def _validate_duration(self, text: str) -> None:
-        """Red border if text is non-empty but doesn't match expected date format."""
-        stripped = text.strip()
-        # Empty is allowed (will be caught at save time); only flag bad format
-        valid = not stripped or bool(_DURATION_RE.match(stripped))
-        _set_valid(self.exp_duration, valid)
-
     def _get_current_item_data(self) -> dict:
         return Experience(
             company=self.exp_company.text().strip(),
+            location=self.exp_location.text().strip(),
+            work_type=self.exp_work_type.currentText(),
             title=self.exp_position.text().strip(),
             date=self.exp_duration.text().strip(),
             achievements=[
@@ -84,6 +113,9 @@ class ExperienceWidget(ListBasedSectionWidget):
     def _set_current_item_data(self, data: dict):
         exp = Experience.model_validate(data)
         self.exp_company.setText(exp.company)
+        self.exp_location.setText(exp.location)
+        idx = self.exp_work_type.findText(exp.work_type)
+        self.exp_work_type.setCurrentIndex(idx if idx >= 0 else 0)
         self.exp_position.setText(exp.title)
         self.exp_duration.setText(exp.date)
         # Handle backward compatibility since our old code used data.get("position") vs data.get("title")
@@ -96,6 +128,7 @@ class ExperienceWidget(ListBasedSectionWidget):
         # Reset validation state after loading clean data
         for w in (
             self.exp_company,
+            self.exp_location,
             self.exp_position,
             self.exp_duration,
             self.exp_achievements,
@@ -104,12 +137,15 @@ class ExperienceWidget(ListBasedSectionWidget):
 
     def _clear_form(self):
         self.exp_company.clear()
+        self.exp_location.clear()
+        self.exp_work_type.setCurrentIndex(0)
         self.exp_position.clear()
         self.exp_duration.clear()
         self.exp_achievements.clear()
         # Reset validation state
         for w in (
             self.exp_company,
+            self.exp_location,
             self.exp_position,
             self.exp_duration,
             self.exp_achievements,

@@ -44,3 +44,24 @@ class ILibraryReader(Protocol):
     def get_all_projects(self) -> list: ...
     def get_all_skills(self) -> list: ...
     def load_all(self) -> tuple: ...
+
+
+@runtime_checkable
+class IDurationInput(Protocol):
+    """
+    Narrow interface for a duration input widget (DIP).
+
+    ExperienceWidget / EducationWidget should depend on this abstraction
+    rather than on the concrete DurationPickerWidget, so the picker
+    implementation can be swapped without touching the form widgets.
+
+    Mirrors the public QLineEdit-compatible API:
+      text()          — return the assembled "Mon YYYY – Mon YYYY" string
+      setText(value)  — populate pickers from an existing duration string
+      clear()         — reset to default state
+      textChanged     — signal emitted whenever the assembled string changes
+    """
+
+    def text(self) -> str: ...
+    def setText(self, value: str) -> None: ...
+    def clear(self) -> None: ...

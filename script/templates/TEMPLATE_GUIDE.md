@@ -232,22 +232,6 @@ Apply filters with the `|` pipe character.
 | `join(", ")` | Joins a list into a string | `<< skill_list \| join(", ") >>` |
 | `default("fallback")` | Uses fallback if value is empty/None | `<< edu.gpa \| default("") >>` |
 | `replace("a","b")` | String replacement | `<< url \| replace("https://","") >>` |
-| `split_position_title` | Gets title part before `(` in position string | `<< exp.position \| split_position_title >>` |
-| `split_position_type` | Gets part inside `(...)` | `<< exp.position \| split_position_type >>` |
-| `split_company_name` | Gets company name before the comma | `<< exp.company \| split_company_name >>` |
-| `split_company_city` | Gets city after the comma | `<< exp.company \| split_company_city >>` |
-
-**Split filter examples:**
-
-```
-Input:  "Data Engineer (On-site)"
-  split_position_title  →  "Data Engineer"
-  split_position_type   →  "On-site"
-
-Input:  "Tars Technologies, Nagpur"
-  split_company_name    →  "Tars Technologies"
-  split_company_city    →  "Nagpur"
-```
 
 ---
 
@@ -314,8 +298,8 @@ Copy this as a starting point for `my-template.tex`:
 <% if experience %>
 \section*{EXPERIENCE}
 <% for exp in experience %>
-\textbf{<< exp.company | split_company_name >>} \hfill \textbf{<< exp.duration >>} \\
-\textit{<< exp.position | split_position_title >>}
+\textbf{<< exp.company >>} \hfill \textbf{<< exp.duration >>} \\
+\textit{<< exp.position >>}<% if exp.work_type %> $\cdot$ \textit{<< exp.work_type >>}<% endif %>
 
 <% for ach in exp.achievements %>
 $\bullet$ << ach >> \\

@@ -6,6 +6,7 @@ High-level policy; depends only on abstractions (IDocumentBuilder, IEscaper).
 import json
 from pathlib import Path
 
+from core.models import ResumeData
 from script.protocols import IDocumentBuilder, IEscaper
 
 
@@ -26,6 +27,8 @@ class ResumeGeneratorService:
         """
         with open(data_file, "r", encoding="utf-8") as f:
             data = json.load(f)
+
+        data = ResumeData.model_validate(data).model_dump(by_alias=True)
 
         latex_content = self._builder.build(data)
 

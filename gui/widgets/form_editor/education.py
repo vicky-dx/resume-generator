@@ -1,14 +1,8 @@
-import re
 from PySide6.QtWidgets import QLineEdit, QTextEdit, QLabel
 
 from gui.widgets.form_editor.base import ListBasedSectionWidget
+from gui.widgets.form_editor.duration_picker import DurationPickerWidget
 from gui.models import Education
-
-_DURATION_RE = re.compile(
-    r"^[A-Za-z]{3}\s+\d{4}\s*[–\-]\s*([A-Za-z]{3}\s+\d{4}|Present|present|Current|current)"
-    r"|^\d{4}\s*[–\-]\s*(\d{4}|Present|present)$",
-    re.IGNORECASE,
-)
 
 
 def _set_valid(widget, valid: bool) -> None:
@@ -28,8 +22,7 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_institution.setPlaceholderText("University / College Name")
         self.edu_degree = QLineEdit()
         self.edu_degree.setPlaceholderText("Bachelor of Science in Computer Science")
-        self.edu_duration = QLineEdit()
-        self.edu_duration.setPlaceholderText("Aug 2017 – Jun 2021")
+        self.edu_duration = DurationPickerWidget()
         self.edu_gpa = QLineEdit()
         self.edu_gpa.setPlaceholderText("CGPA: 8/10")
 
@@ -55,20 +48,11 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_degree.textChanged.connect(
             lambda t: _set_valid(self.edu_degree, bool(t.strip()))
         )
-        self.edu_duration.textChanged.connect(self._validate_duration)
-
-    def _validate_duration(self, text: str) -> None:
-        stripped = text.strip()
-        valid = not stripped or bool(_DURATION_RE.match(stripped))
-        _set_valid(self.edu_duration, valid)
+        self.edu_duration.textChanged.connect(
+            lambda t: _set_valid(self.edu_duration, bool(t.strip()))
+        )
 
     def _get_current_item_data(self) -> dict:
-        # Returning dict here since ListBasedSectionWidget._collect_list aggregates dicts for the final JSON.
-        # Alternatively we can collect objects, but the base widget works with dicts currently for the JSON dump.
-        # To be fully typed, we map to Education then .to_dict()
-        # To be fully typed, we map to Education then .model_dump(by_alias=True)
-        from gui.models import Education
-
         coursework_list = [
             c.strip() for c in self.edu_coursework.toPlainText().split(",") if c.strip()
         ]
@@ -88,7 +72,13 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_gpa.setText(edu.gpa)
         self.edu_coursework.setPlainText(", ".join(edu.coursework))
         # Reset validation state after loading clean data
-        for w in (self.edu_institution, self.edu_degree, self.edu_duration):
+        for w in (
+            self.edu_institution,
+            self.edu_degree,
+            self.edu_duration,
+            self.edu_gpa,
+            self.edu_coursework,
+        ):
             _set_valid(w, True)
 
     def _clear_form(self):
@@ -98,7 +88,13 @@ class EducationWidget(ListBasedSectionWidget):
         self.edu_gpa.clear()
         self.edu_coursework.clear()
         # Reset validation state
-        for w in (self.edu_institution, self.edu_degree, self.edu_duration):
+        for w in (
+            self.edu_institution,
+            self.edu_degree,
+            self.edu_duration,
+            self.edu_gpa,
+            self.edu_coursework,
+        ):
             _set_valid(w, True)
 
     def _get_item_title(self, data: dict) -> str:
