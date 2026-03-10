@@ -35,12 +35,23 @@ class MarkupConverter:
 
     def __init__(self, char_map: Dict[str, str]):
         self._char_map = char_map
+        self._bold_italic_pat = re.compile(r"\*\*\*(.+?)\*\*\*")
         self._bold_pat = re.compile(r"\*\*(.+?)\*\*")
         self._italic_pat = re.compile(r"\*([^*\n]+?)\*")
 
     def convert(self, text: str) -> str:
+        # Bold+italic must be processed first so *** isn't consumed by ** or *
+        text = self._bold_italic_pat.sub(
+            lambda m: r"\textbf{\textit{" + self._escape_inner(m.group(1)) + r"}}",
+            text,
+        )
         text = self._apply(text, self._bold_pat, r"\textbf", self._italic_pat)
         text = self._apply(text, self._italic_pat, r"\textit", self._bold_pat)
+        return text
+
+    def _escape_inner(self, text: str) -> str:
+        for ch, r in self._char_map.items():
+            text = text.replace(ch, r)
         return text
 
     def _apply(
@@ -72,8 +83,19 @@ class MarkupConverter:
             mapping[key] = m.group(1)
             return key
 
-        pattern = self._bold_pat if tag == "BOLD" else self._italic_pat
+        if tag == "BI":
+            pattern = self._bold_italic_pat
+        elif tag == "BOLD":
+            pattern = self._bold_pat
+        else:
+            pattern = self._italic_pat
         return pattern.sub(sub, text), mapping
+
+    def restore_bold_italic(self, text: str, mapping: Dict[str, str]) -> str:
+        for placeholder, inner in mapping.items():
+            escaped = self._escape_inner(inner)
+            text = text.replace(placeholder, r"\textbf{\textit{" + escaped + r"}}")
+        return text
 
     def restore(
         self, text: str, mapping: Dict[str, str], cmd: str, nested_pat: re.Pattern
@@ -147,6 +169,8 @@ class LatexEscaper:
             return text
 
         # 1. Extract markup and terms so char escaping doesn't corrupt them
+        #    Bold+italic must be extracted first so *** isn't split by ** or *
+        text, bold_italic_map = self._markup.extract(text, "BI")
         text, bold_map = self._markup.extract(text, "BOLD")
         text, italic_map = self._markup.extract(text, "ITALIC")
         text, term_map = self._terms.protect(text)
@@ -160,6 +184,7 @@ class LatexEscaper:
         # 4. Restore markup as \textbf / \textit
         bold_pat = self._markup._bold_pat
         italic_pat = self._markup._italic_pat
+        text = self._markup.restore_bold_italic(text, bold_italic_map)
         text = self._markup.restore(text, bold_map, r"\textbf", italic_pat)
         text = self._markup.restore(text, italic_map, r"\textit", bold_pat)
 

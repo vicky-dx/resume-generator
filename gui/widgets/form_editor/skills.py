@@ -44,6 +44,8 @@ class SkillsWidget(ListBasedSectionWidget):
             self.items_edit.setPlainText("\n".join(skill_cat.items))
         elif "skills" in data:
             self.items_edit.setPlainText("\n".join(data["skills"]))
+        else:
+            self.items_edit.clear()
 
     def _clear_form(self):
         self.cat_edit.clear()
