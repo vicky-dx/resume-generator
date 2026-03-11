@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication
-
+import asyncio
 from gui.config import UIConfig, APP_VERSION, GITHUB_REPO
 from gui.utils import get_base_path, get_resource_path
 from gui.protocols import IFileManager
