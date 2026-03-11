@@ -31,6 +31,7 @@ from gui.widgets.template_tab import TemplateTab
 from gui.widgets.quick_create_tab import QuickCreateTab
 from gui.widgets.form_editor.form_tab import FormEditorTab
 from gui.widgets.library_tab import LibraryTab
+from gui.widgets.prompt_tab import PromptTab
 from gui.widgets.log_panel import LogPanel
 from gui.widgets.action_panel import ActionPanelWidget
 from gui.services.library_service import LibraryService
@@ -140,6 +141,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.form_tab.save_and_generate_requested.connect(self._form_save_and_generate)
         self.form_tab.open_folder_requested.connect(self.open_output_folder)
         self.tabs.addTab(self.form_tab, get_icon(UIConfig.ICON_EDIT), "Form Editor")
+
+        self.prompt_tab = PromptTab()
+        self.tabs.addTab(self.prompt_tab, get_icon(UIConfig.ICON_QUICK), "Prompt")
 
         self.library_tab = LibraryTab(LibraryService(self.json_folder))
         self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_LIBRARY), "Library")
