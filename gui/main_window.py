@@ -188,16 +188,19 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self._progress_bar.setRange(0, 100)
         self._progress_bar.setValue(0)
         self._progress_bar.setFixedHeight(10)
+        self._progress_bar.setFixedWidth(180)
         self._progress_bar.setTextVisible(False)
         progress_row_layout.addWidget(self._progress_bar)
 
-        self._progress_row.setVisible(False)
-        log_container_layout.addWidget(self._progress_row)
+        self._progress_row.setFixedHeight(22)
+        self._progress_label.setVisible(False)
+        self._progress_bar.setVisible(False)
 
         self.log_panel = LogPanel()
         log_container_layout.addWidget(self.log_panel)
 
         panel_layout.addWidget(self._log_container)
+        panel_layout.addWidget(self._progress_row, 0, Qt.AlignmentFlag.AlignRight)
 
         main_layout.addWidget(self.generate_panel)
 
@@ -399,7 +402,8 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.worker.finished.connect(self.on_generation_finished)
         self._progress_bar.setValue(0)
         self._progress_label.setText("Generating…")
-        self._progress_row.setVisible(True)
+        self._progress_label.setVisible(True)
+        self._progress_bar.setVisible(True)
         await self.worker.run()
 
     def _on_progress_update(self, value: int):
@@ -419,7 +423,8 @@ class ResumeGeneratorMainWindow(QMainWindow):
             self.show_message(f"Generation failed:\n{message}", "error")
 
     def _hide_progress_row(self):
-        self._progress_row.setVisible(False)
+        self._progress_label.setVisible(False)
+        self._progress_bar.setVisible(False)
         self._progress_bar.setValue(0)
 
     def open_output_folder(self):
