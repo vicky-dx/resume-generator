@@ -286,6 +286,8 @@ class LibraryTab(QWidget):
     Views never call the reader directly — all I/O is owned here (SRP).
     """
 
+    show_action_panel = False
+
     def __init__(self, library_reader: ILibraryReader, parent=None):
         super().__init__(parent)
         self._reader = library_reader

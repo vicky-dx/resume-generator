@@ -79,6 +79,8 @@ class UIConfig:
     ICON_LIBRARY = "fa5s.layer-group"
     ICON_PROJECT = "fa5s.project-diagram"
     ICON_SKILLS = "fa5s.tags"
+    ICON_PLUS = "fa5s.plus"
+    ICON_PROMPT = "fa5s.comment-alt"
 
     # ── SRP Note ──────────────────────────────────────────────────────────────
     # Widget creation helpers have been moved to gui.ui_helpers (apply_style,
