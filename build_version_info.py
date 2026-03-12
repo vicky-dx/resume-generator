@@ -55,7 +55,7 @@ def generate(version: str | None = None):
 """
     out = Path(__file__).parent / "version_info.txt"
     out.write_text(content, encoding="utf-8")
-    print(f"Generated version_info.txt  →  {v}")
+    print(f"Generated version_info.txt -> {v}")
 
 
 if __name__ == "__main__":
