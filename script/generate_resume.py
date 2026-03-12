@@ -61,15 +61,15 @@ def generate_resume(
 
     if not extra_protected_terms:
         extra_protected_terms = []
-        
+
     try:
         # Auto-protect all skills dynamically
-        with open(data_file, 'r', encoding='utf-8') as f:
+        with open(data_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-            if 'skills' in data:
-                for skill_cat in data['skills']:
-                    if 'items' in skill_cat:
-                        for skill in skill_cat['items']:
+            if "skills" in data:
+                for skill_cat in data["skills"]:
+                    if "items" in skill_cat:
+                        for skill in skill_cat["items"]:
                             extra_protected_terms.append(skill)
     except Exception as e:
         print(f"Warning: Could not auto-protect skills from data file: {e}")
