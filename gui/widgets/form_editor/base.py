@@ -64,11 +64,22 @@ class ListBasedSectionWidget(BaseSectionWidget):
         apply_style(add_btn, "primary")
         add_btn.clicked.connect(self._add_item)
         rm_btn = QPushButton("− Remove")
-        apply_style(rm_btn, "default")
+        apply_style(rm_btn, "danger")
         rm_btn.clicked.connect(self._remove_item)
         btns_layout.addWidget(add_btn)
         btns_layout.addWidget(rm_btn)
         left_layout.addLayout(btns_layout)
+
+        order_btns_layout = QHBoxLayout()
+        up_btn = QPushButton("↑ Up")
+        apply_style(up_btn, "default")
+        up_btn.clicked.connect(self._move_up)
+        down_btn = QPushButton("↓ Down")
+        apply_style(down_btn, "default")
+        down_btn.clicked.connect(self._move_down)
+        order_btns_layout.addWidget(up_btn)
+        order_btns_layout.addWidget(down_btn)
+        left_layout.addLayout(order_btns_layout)
 
         outer.addWidget(left)
 
@@ -180,6 +191,59 @@ class ListBasedSectionWidget(BaseSectionWidget):
             self.item_list.setCurrentRow(new_idx)
         else:
             self._load_index(-1)
+
+    def _move_up(self):
+        row = self.item_list.currentRow()
+        if row > 0:
+            self._save_current()
+
+            # Swap data
+            self.data_list[row - 1], self.data_list[row] = (
+                self.data_list[row],
+                self.data_list[row - 1],
+            )
+
+            # Swap UI items
+            self.item_list.blockSignals(True)
+            item = self.item_list.takeItem(row)
+            self.item_list.insertItem(row - 1, item)
+            self.item_list.setCurrentRow(row - 1)
+            self.current_idx = row - 1
+            self.item_list.blockSignals(False)
+
+            self._refresh_item_text(row)
+            self._refresh_item_text(row - 1)
+
+    def _move_down(self):
+        row = self.item_list.currentRow()
+        if row >= 0 and row < len(self.data_list) - 1:
+            self._save_current()
+
+            # Swap data
+            self.data_list[row + 1], self.data_list[row] = (
+                self.data_list[row],
+                self.data_list[row + 1],
+            )
+
+            # Swap UI items
+            self.item_list.blockSignals(True)
+            item = self.item_list.takeItem(row)
+            self.item_list.insertItem(row + 1, item)
+            self.item_list.setCurrentRow(row + 1)
+            self.current_idx = row + 1
+            self.item_list.blockSignals(False)
+
+            self._refresh_item_text(row)
+            self._refresh_item_text(row + 1)
+
+    def _refresh_item_text(self, row):
+        if 0 <= row < len(self.data_list):
+            data = self.data_list[row]
+            item = self.item_list.item(row)
+            if item:
+                item.setText(
+                    self._get_item_title(data) or f"{self.item_name} {row + 1}"
+                )
 
     # Methods to override in subclasses:
     def _get_current_item_data(self) -> dict:

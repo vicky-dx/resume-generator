@@ -1,6 +1,6 @@
 [project]
 name = "resume-automation"
-version = "1.0.5"
+version = "1.0.6"
 description = "PySide6 GUI for generating LaTeX resumes via Jinja2 + xelatex"
 requires-python = ">=3.12"
 dependencies = [

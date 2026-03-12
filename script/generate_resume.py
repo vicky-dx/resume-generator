@@ -57,6 +57,23 @@ def generate_resume(
         script_dir = Path(__file__).resolve().parent
         template_dir = script_dir / "templates"
 
+    import json
+
+    if not extra_protected_terms:
+        extra_protected_terms = []
+        
+    try:
+        # Auto-protect all skills dynamically
+        with open(data_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if 'skills' in data:
+                for skill_cat in data['skills']:
+                    if 'items' in skill_cat:
+                        for skill in skill_cat['items']:
+                            extra_protected_terms.append(skill)
+    except Exception as e:
+        print(f"Warning: Could not auto-protect skills from data file: {e}")
+
     style = StyleConfig(
         font=font,
         font_size=font_size,

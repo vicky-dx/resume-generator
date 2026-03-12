@@ -9,6 +9,7 @@
 \usepackage{tabularx}
 \usepackage{lmodern}
 \usepackage{fontspec}
+\usepackage{enumitem}
 \setmainfont{<< font >>}
 <% if use_icons %>
 \usepackage{fontawesome5}
@@ -73,7 +74,7 @@
 
 <% if summary %>
 \section*{PROFESSIONAL SUMMARY}
-\noindent << summary >>
+{\raggedright\noindent << summary >>\par}
 <% endif %>
 
 <% if skills %>
@@ -96,54 +97,58 @@
 \textit{<< exp.work_type >>} & \textit{<< exp.location >>} & \\
 \end{tabular*}
 
-\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
 <% if exp.achievements %>
 <% for ach in exp.achievements %>
-    \textcolor{sectionblue}{<< bullet >>} & << ach >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
+    \item << ach >>
 <% endfor %>
 <% endif %>
-\end{tabular}
+\end{itemize}
 
 <% endfor %>
 <% endif %>
 
 <% if projects %>
 \section*{PROJECT WORK}
-\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
 <% for proj in projects %>
-    \textcolor{sectionblue}{<< bullet >>} & \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
-    & {\small \textit{\textbf{Tech:}} << proj.technologies >>}<% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
+    \item \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
+    {\small \textit{\textbf{Tech:}} << proj.technologies >>}
 <% endfor %>
-\end{tabular}
+\end{itemize}
 <% endif %>
 
 <% if education %>
 \section*{EDUCATION}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
 <% for edu in education %>
-
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r}
-\textbf{<< edu.degree >>} & \textbf{<< edu.duration >>} \\
-<< edu.institution >><% if edu.location %>, \textit{<< edu.location >>}<% endif %> & << edu.gpa | default("") >> \\
-\end{tabular*}
-<% set _cw = edu.get("Relevant coursework") or edu.get("coursework") %>
-<% if _cw %>
-\noindent{\small \textit{\textbf{Relevant coursework:}} {\raggedright << _cw | join(", ") >>\par}}
-<% endif %>
+    \item \begin{tabular*}{\linewidth}[t]{@{} l @{\extracolsep{\fill}} r @{}}
+    \textbf{<< edu.degree >>} & \textbf{<< edu.duration >>} \\
+    << edu.institution >><% if edu.location %>, \textit{<< edu.location >>}<% endif %> & << edu.gpa | default("") >> \\
+    \end{tabular*}
+    <% set _cw = edu.get("Relevant coursework") or edu.get("coursework") %>
+    <% if _cw %>
+    \par\vspace{2pt}\noindent{\small \textit{\textbf{Relevant coursework:}} {\raggedright << _cw | join(", ") >>\par}}
+    <% endif %>
 <% endfor %>
+\end{itemize}
 <% endif %>
 
 
 <% if awards %>
 \section*{AWARDS AND CERTIFICATES}
-\begin{tabular}{@{\hspace{<< bullet_indent >>em}}l@{\hspace{0.4em}}p{\dimexpr\textwidth-<< bullet_indent >>em-0.4em-1em\relax}@{}}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
 <% for award in awards %>
 <% if award.description %>
-    \textcolor{sectionblue}{<< bullet >>} & \textbf{<< award.title >>:} << award.description >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
+    \item \textbf{<< award.title >>:} << award.description >>
 <% else %>
-    \textcolor{sectionblue}{<< bullet >>} & << award.title >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
+    \item << award.title >>
 <% endif %>
 <% endfor %>
-\end{tabular}
+\end{itemize}
 <% endif %>
 
 \end{document}

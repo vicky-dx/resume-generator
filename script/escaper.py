@@ -137,9 +137,11 @@ class TermProtector:
                     self.found.add(matches[0])
         return text, mapping
 
-    def restore(self, text: str, mapping: Dict[str, str]) -> str:
+    def restore(self, text: str, mapping: Dict[str, str], char_escaper=None) -> str:
         for placeholder, original in mapping.items():
-            text = text.replace(placeholder, r"\mbox{" + original + "}")
+            # If we pass the char_escaper, safely escape the inner term before wrapping in mbox
+            safe_original = char_escaper.escape(original) if char_escaper else original
+            text = text.replace(placeholder, r"\mbox{" + safe_original + "}")
         return text
 
 
@@ -178,8 +180,8 @@ class LatexEscaper:
         # 2. Escape special characters
         text = self._char.escape(text)
 
-        # 3. Restore protected terms as \mbox{}
-        text = self._terms.restore(text, term_map)
+        # 3. Restore protected terms as \mbox{}, safely escaping contents
+        text = self._terms.restore(text, term_map, char_escaper=self._char)
 
         # 4. Restore markup as \textbf / \textit
         bold_pat = self._markup._bold_pat
