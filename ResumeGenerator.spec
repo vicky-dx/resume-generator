@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets', 'assets'), ('script/templates', 'script/templates'), ('job-role-json', 'job-role-json'), ('pyproject.toml', '.')],
+    datas=[('assets', 'assets'), ('script/templates', 'script/templates'), ('job-role-json', 'job-role-json'), ('pyproject.toml', '.'), ('prompt_templates', 'prompt_templates')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

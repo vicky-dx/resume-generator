@@ -25,9 +25,27 @@ from core.prompt_template import PromptTemplate
 from gui.ui_helpers import set_custom_tooltip, make_icon_button, get_icon
 from gui.config import UIConfig
 
-TEMPLATE_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "prompt_templates")
-)
+import sys
+from pathlib import Path
+
+if getattr(sys, "frozen", False):
+    # If running as PyInstaller .exe, use an adjacent folder so user templates persist
+    exe_dir = Path(sys.executable).parent
+    TEMPLATE_DIR = str(exe_dir / "prompt_templates")
+
+    # Auto-copy bundled templates if they don't exist
+    os.makedirs(TEMPLATE_DIR, exist_ok=True)
+    bundled = Path(sys._MEIPASS) / "prompt_templates"
+    if bundled.exists():
+        import shutil
+
+        for _tmpl in bundled.glob("*.json"):
+            if not Path(TEMPLATE_DIR, _tmpl.name).exists():
+                shutil.copy2(_tmpl, Path(TEMPLATE_DIR, _tmpl.name))
+else:
+    TEMPLATE_DIR = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "prompt_templates")
+    )
 
 
 class PromptTab(QWidget):
