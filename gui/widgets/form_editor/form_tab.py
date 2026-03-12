@@ -34,6 +34,7 @@ from gui.utils import get_resource_path
 class FormEditorTab(QWidget):
     """Main Form Editor tab comprising the sidebar nav, toolbar, and stacked widgets."""
 
+    show_action_panel = False
     save_requested = Signal(str, dict)  # resume_name, data_dict
     save_and_generate_requested = Signal(
         str, dict, dict

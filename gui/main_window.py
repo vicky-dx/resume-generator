@@ -31,6 +31,7 @@ from gui.widgets.template_tab import TemplateTab
 from gui.widgets.quick_create_tab import QuickCreateTab
 from gui.widgets.form_editor.form_tab import FormEditorTab
 from gui.widgets.library_tab import LibraryTab
+from gui.widgets.prompt_tab import PromptTab
 from gui.widgets.log_panel import LogPanel
 from gui.widgets.action_panel import ActionPanelWidget
 from gui.services.library_service import LibraryService
@@ -141,6 +142,9 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.form_tab.open_folder_requested.connect(self.open_output_folder)
         self.tabs.addTab(self.form_tab, get_icon(UIConfig.ICON_EDIT), "Form Editor")
 
+        self.prompt_tab = PromptTab()
+        self.tabs.addTab(self.prompt_tab, get_icon(UIConfig.ICON_QUICK), "Prompt")
+
         self.library_tab = LibraryTab(LibraryService(self.json_folder))
         self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_LIBRARY), "Library")
 
@@ -162,60 +166,50 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.action_panel.open_folder_requested.connect(self.open_output_folder)
         panel_layout.addWidget(self.action_panel)
 
-        # Log Panel
-        self.log_panel = LogPanel()
-        panel_layout.addWidget(self.log_panel)
+        # Log + Progress container (opt-in via show_log_panel)
+        self._log_container = QWidget()
+        log_container_layout = QVBoxLayout(self._log_container)
+        log_container_layout.setContentsMargins(0, 0, 0, 0)
+        log_container_layout.setSpacing(2)
 
-        main_layout.addWidget(self.generate_panel)
-
-        # Floating progress overlay — parented to central widget so it sits
-        # on top of everything. Repositioned in resizeEvent.
-        self._progress_overlay = QWidget(central)
-        self._progress_overlay.setObjectName("progressOverlay")
-        overlay_layout = QHBoxLayout(self._progress_overlay)
-        overlay_layout.setContentsMargins(10, 6, 10, 6)
-        overlay_layout.setSpacing(8)
+        # Inline progress row (shown only during generation)
+        self._progress_row = QWidget()
+        self._progress_row.setObjectName("progressOverlay")
+        progress_row_layout = QHBoxLayout(self._progress_row)
+        progress_row_layout.setContentsMargins(10, 4, 10, 4)
+        progress_row_layout.setSpacing(8)
 
         self._progress_label = QLabel("Generating…")
         self._progress_label.setObjectName("progressLabel")
-        overlay_layout.addWidget(self._progress_label)
+        progress_row_layout.addWidget(self._progress_label)
 
         self._progress_bar = QProgressBar()
         self._progress_bar.setObjectName("generationProgress")
         self._progress_bar.setRange(0, 100)
         self._progress_bar.setValue(0)
-        self._progress_bar.setFixedWidth(200)
         self._progress_bar.setFixedHeight(10)
         self._progress_bar.setTextVisible(False)
-        overlay_layout.addWidget(self._progress_bar)
+        progress_row_layout.addWidget(self._progress_bar)
 
-        self._progress_overlay.adjustSize()
-        self._progress_overlay.setVisible(False)
+        self._progress_row.setVisible(False)
+        log_container_layout.addWidget(self._progress_row)
 
-        # Hide generate panel on form editor tab
+        self.log_panel = LogPanel()
+        log_container_layout.addWidget(self.log_panel)
+
+        panel_layout.addWidget(self._log_container)
+
+        main_layout.addWidget(self.generate_panel)
+
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._reposition_progress_overlay()
-
-    def _reposition_progress_overlay(self):
-        margin = 14
-        cw = self.centralWidget()
-        if cw is None:
-            return
-        self._progress_overlay.adjustSize()
-        ow = self._progress_overlay.width()
-        oh = self._progress_overlay.height()
-        x = cw.width() - ow - margin
-        y = cw.height() - oh - margin
-        self._progress_overlay.move(x, y)
-        self._progress_overlay.raise_()
-
     def _on_tab_changed(self, index):
-        # Hide the generate action panel on tabs that have their own controls
-        # or are read-only (Form Editor = 2, Library = 3)
-        self.action_panel.setVisible(index not in (2, 3))
+        widget = self.tabs.widget(index)
+        show_action = getattr(widget, "show_action_panel", True)
+        show_log = getattr(widget, "show_log_panel", True)
+        self.action_panel.setVisible(show_action)
+        self._log_container.setVisible(show_log)
+        self.generate_panel.setVisible(show_action or show_log)
         if index == 0:
             self.refresh_templates()
 
@@ -405,8 +399,7 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.worker.finished.connect(self.on_generation_finished)
         self._progress_bar.setValue(0)
         self._progress_label.setText("Generating…")
-        self._progress_overlay.setVisible(True)
-        self._reposition_progress_overlay()
+        self._progress_row.setVisible(True)
         await self.worker.run()
 
     def _on_progress_update(self, value: int):
@@ -418,15 +411,15 @@ class ResumeGeneratorMainWindow(QMainWindow):
 
         self._progress_bar.setValue(100)
         self._progress_label.setText("✅ Done" if success else "❌ Failed")
-        QTimer.singleShot(3000, self._hide_progress_overlay)
+        QTimer.singleShot(3000, self._hide_progress_row)
 
         if success:
             self.show_message("Resume generated successfully!", "success")
         else:
             self.show_message(f"Generation failed:\n{message}", "error")
 
-    def _hide_progress_overlay(self):
-        self._progress_overlay.setVisible(False)
+    def _hide_progress_row(self):
+        self._progress_row.setVisible(False)
         self._progress_bar.setValue(0)
 
     def open_output_folder(self):

@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 import subprocess
 import sys
 import traceback
@@ -51,6 +52,17 @@ class AsyncGenerationWorker(QObject):
     async def run(self):
         """Run generation asynchronously"""
         try:
+            # Pre-flight: verify the LaTeX compiler is available on PATH
+            if not shutil.which(self.compiler):
+                msg = (
+                    f"'{self.compiler}' was not found on your system PATH.\n\n"
+                    "Please install MiKTeX from https://miktex.org and ensure "
+                    "it is added to your PATH, then restart the application."
+                )
+                self.log_message.emit(msg, "error")
+                self.finished.emit(False, msg)
+                return
+
             self.progress_update.emit(UIConfig.PROGRESS_START)
             self.log_message.emit("Starting resume generation...", "info")
 
