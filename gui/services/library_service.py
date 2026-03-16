@@ -1,6 +1,7 @@
 """Library service — aggregates projects and skills across all JSON template files."""
 
 import json
+import time
 import re
 import difflib
 from pathlib import Path
@@ -63,15 +64,15 @@ class LibraryService:
         return skills
 
     def load_all(
-        self, use_ai: bool = False
+        self, use_ai: bool = False, progress_cb=None, log_cb=None
     ) -> tuple[list[LibraryProject], list[SkillCategory]]:
         """Public single-pass loader. Intended for use with run_in_executor."""
-        return self._load_all(use_ai=use_ai)
+        return self._load_all(use_ai=use_ai, progress_cb=progress_cb, log_cb=log_cb)
 
     # ── Internal single-pass loader ───────────────────────────────────────────
 
     def _load_all(
-        self, use_ai: bool = False
+        self, use_ai: bool = False, progress_cb=None, log_cb=None
     ) -> tuple[list[LibraryProject], list[SkillCategory]]:
         """Parse every JSON file exactly once and return both projects and skills.
 
@@ -84,12 +85,30 @@ class LibraryService:
         active_merger = (
             self._ai_merger if (use_ai and self._ai_merger) else self._merger
         )
+        
+        if hasattr(active_merger, "set_logger") and log_cb:
+            active_merger.set_logger(log_cb)
 
-        for path in sorted(self._json_folder.glob("*.json"), key=lambda f: f.name):
+        files = list(sorted(self._json_folder.glob("*.json"), key=lambda f: f.name))
+        total_files = len(files)
+        
+        if log_cb:
+            log_cb(f"Found {total_files} JSON templates to analyze.", "info")
+
+        for index, path in enumerate(files):
+            if progress_cb:
+                # 90% space given to reading and processing 
+                progress_cb(index, max(1, total_files))
+            
+            # Artificial micro-delay allows PySide UI to animate smoothly across loop iterations
+            time.sleep(0.04)
+
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
                 resume = ResumeData.model_validate(data)
-            except Exception:
+            except Exception as e:
+                if log_cb:
+                    log_cb(f"Failed parsing {path.name}: {e}", "warning")
                 continue
 
             # ── projects ──────────────────────────────────────────────────────
@@ -142,6 +161,9 @@ class LibraryService:
                     deduped.append(item)
                     seen_lower.add(item.lower())
             skills.append(SkillCategory(category=category, items=deduped))
+
+        if progress_cb:
+            progress_cb(total_files, total_files)
 
         return projects, skills
 

@@ -77,6 +77,15 @@ class AIMerger(IProjectMerger):
         self._payload_builder = payload_builder
         self._cache_file = Path("ai_merge_cache.json")
         self._cache = self._load_cache()
+        self._log_cb = None
+
+    def set_logger(self, cb):
+        self._log_cb = cb
+
+    def _log(self, msg: str, level: str = "info"):
+        # print(msg)  # Disabled debug for LLM as requested
+        if self._log_cb:
+            self._log_cb(msg, level)
 
     def _load_cache(self) -> dict:
         try:
@@ -104,8 +113,8 @@ class AIMerger(IProjectMerger):
         # Create a unique, reproducible hash of the exact prompt content
         cache_key = hashlib.md5(prompt.encode("utf-8")).hexdigest()
         if cache_key in self._cache:
-            print(
-                f"[AI Merger Cache] ⚡ CACHE HIT for '{new_project.name}'. Skipping LLM call."
+            self._log(
+                f"[Cache] HIT for '{new_project.name}'. Skipping LLM call.", "success"
             )
             result = self._cache[cache_key]
             return LibraryProject(
@@ -119,13 +128,7 @@ class AIMerger(IProjectMerger):
         # ── Logging for debugging and token estimation ──
         total_chars = len(prompt) + len(system_prompt)
         approx_tokens = total_chars // 4  # A common rough estimate (4 chars per token)
-        print(f"\n[AI Merger] Attempting merge for collision: '{new_project.name}'")
-        print(
-            f"[AI Merger] Est. Prompt Tokens: {approx_tokens} (~{total_chars} characters)"
-        )
-        print(f"[AI Merger] --- Payload Snippet (first 150 chars) ---")
-        print(f"{prompt[:150]}...")
-        print(f"---------------------------------------------------\n")
+        self._log(f"Merging collision: '{new_project.name}' (Est. Tokens: {approx_tokens})", "info")
 
         try:
             # We enforce a JSON response structure from the LLM
@@ -135,6 +138,8 @@ class AIMerger(IProjectMerger):
             self._cache[cache_key] = result
             self._save_cache()
 
+            self._log(f"Successfully optimized '{new_project.name}' via AI", "success")
+            
             # Reconstruct the project from the merged data
             return LibraryProject(
                 name=result.get("name", existing_project.name),
@@ -144,8 +149,8 @@ class AIMerger(IProjectMerger):
                 source=f"{existing_project.source} & {new_project.source} (AI Merged)",
             )
         except Exception as e:
-            print(
-                f"AI merge failed for {new_project.name}: {e}. Falling back to longer description."
+            self._log(
+                f"AI merge failed for {new_project.name}: {e}. Falling back to longer description.", "error"
             )
             # Fallback inline length-based logic
             if self._desc_len(new_project) > self._desc_len(existing_project):

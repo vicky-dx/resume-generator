@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, QSettings, QFileSystemWatcher
+from PySide6.QtCore import Qt, QSettings, QFileSystemWatcher, Signal
 from PySide6.QtGui import QFont
 from qasync import asyncSlot
 
@@ -196,6 +196,12 @@ class LibraryTab(QWidget):
     """A heavily simplified AI-only implementation of the Library."""
 
     show_action_panel = False
+    show_log_panel = True
+    
+    progress_update = Signal(int)
+    log_message = Signal(str, str)
+    load_started = Signal(str)
+    load_finished = Signal()
 
     def __init__(self, library_reader: ILibraryReader, parent=None):
         super().__init__(parent)
@@ -305,21 +311,36 @@ class LibraryTab(QWidget):
         )
         self.projects_view.list_widget.clear()
 
+        # Update tracking GUI Signals
+        self.load_started.emit("AI: Analyzing & Merging Master Library...")
+        self.log_message.emit("Scanning for Master Data...", "info")
+
         # 2. Run the heavy I/O off the main thread to prevent freezing
         loop = asyncio.get_running_loop()
+
+        def _progress_cb(current: int, total: int):
+            pct = int((current / total) * 100) if total > 0 else 0
+            self.progress_update.emit(pct)
+            
+        def _log_cb(msg: str, level: str = "info"):
+            self.log_message.emit(msg, level)
 
         try:
             # Tell LibraryService to always use AI
             projects, skills = await loop.run_in_executor(
-                None, lambda: self._reader.load_all(use_ai=True)
+                None, lambda: self._reader.load_all(use_ai=True, progress_cb=_progress_cb, log_cb=_log_cb)
             )
 
             # 3. Bring data back to main thread and populate exactly
             self.projects_view.populate(projects)
             self.skills_view.populate(skills)
+            self.load_finished.emit()
+            self.log_message.emit("Successfully aggregated Master Library Data.", "success")
         except Exception as e:
             QMessageBox.critical(self, "AI Merge Failed", str(e))
             self.projects_view.detail_panel.show_placeholder("Error during AI merge.")
+            self.load_finished.emit()
+            self.log_message.emit(f"Merge failed: {e}", "error")
         finally:
             self.load_ai_btn.setText(" Refresh with AI")
             self.load_ai_btn.setStyleSheet("")

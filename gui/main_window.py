@@ -161,6 +161,8 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.library_tab = LibraryTab(
             LibraryService(self.json_folder, ai_merger=ai_merger)
         )
+
+        
         self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_AI), "AI-Library")
 
         # Bottom Panel
@@ -194,6 +196,8 @@ class ResumeGeneratorMainWindow(QMainWindow):
         progress_row_layout.setContentsMargins(10, 4, 10, 4)
         progress_row_layout.setSpacing(8)
 
+        progress_row_layout.addStretch()  # pushes right side elements
+
         self._progress_label = QLabel("Generating…")
         self._progress_label.setObjectName("progressLabel")
         progress_row_layout.addWidget(self._progress_label)
@@ -210,12 +214,19 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self._progress_row.setFixedHeight(22)
         self._progress_label.setVisible(False)
         self._progress_bar.setVisible(False)
+        self._progress_row.setVisible(False)
 
         self.log_panel = LogPanel()
         log_container_layout.addWidget(self.log_panel)
+        
+        # Wire up logs for library tab now that log_panel exists
+        self.library_tab.log_message.connect(self.log_panel.append_message)
+        self.library_tab.progress_update.connect(self._on_progress_update)
+        self.library_tab.load_started.connect(self._on_ai_load_started)
+        self.library_tab.load_finished.connect(self._on_ai_load_finished)
 
         panel_layout.addWidget(self._log_container)
-        panel_layout.addWidget(self._progress_row, 0, Qt.AlignmentFlag.AlignRight)
+        panel_layout.addWidget(self._progress_row)
 
         main_layout.addWidget(self.generate_panel)
 
@@ -417,12 +428,29 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.worker.finished.connect(self.on_generation_finished)
         self._progress_bar.setValue(0)
         self._progress_label.setText("Generating…")
+        self._progress_row.setVisible(True)
         self._progress_label.setVisible(True)
         self._progress_bar.setVisible(True)
         await self.worker.run()
 
     def _on_progress_update(self, value: int):
+        print(f"[Debug-Progress] Received value: {value}%")
         self._progress_bar.setValue(value)
+
+    def _on_ai_load_started(self, task_name: str):
+        print(f"[Debug-Progress] Started task: {task_name}")
+        self._progress_bar.setValue(0)
+        self._progress_label.setText(task_name)
+        self._progress_row.setVisible(True)
+        self._progress_label.setVisible(True)
+        self._progress_bar.setVisible(True)
+        self.log_panel.clear_log()
+
+    def _on_ai_load_finished(self):
+        print(f"[Debug-Progress] Finished task.")
+        self._progress_bar.setValue(100)
+        self._progress_label.setText("✅ AI Merging Complete")
+        QTimer.singleShot(3000, self._hide_progress_row)
 
     def on_generation_finished(self, success: bool, message: str):
         self.is_generating = False
@@ -440,6 +468,7 @@ class ResumeGeneratorMainWindow(QMainWindow):
     def _hide_progress_row(self):
         self._progress_label.setVisible(False)
         self._progress_bar.setVisible(False)
+        self._progress_row.setVisible(False)
         self._progress_bar.setValue(0)
 
     def open_output_folder(self):
