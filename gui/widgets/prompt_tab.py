@@ -154,6 +154,8 @@ class PromptTab(QWidget):
         # Template list
         self.template_list = QListWidget()
         self.template_list.setObjectName("innerNav")
+        self.template_list.setWordWrap(True)
+        self.template_list.setSpacing(2)
         self.template_list.setContentsMargins(4, 4, 4, 4)
         self.template_list.currentRowChanged.connect(self._on_list_selection)
         layout.addWidget(self.template_list, stretch=1)

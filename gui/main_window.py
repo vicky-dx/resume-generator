@@ -79,10 +79,10 @@ class ResumeGeneratorMainWindow(QMainWindow):
             screen.y() + (screen.height() - win_h) // 2,
         )
 
-        # Set window icon
+        # Set window icon (Use PNG internally because Qt native PNG support is guaranteed)
         assets = get_resource_path("assets")
         icon_path = (
-            assets / "cv.ico" if (assets / "cv.ico").exists() else assets / "cv.png"
+            assets / "cv.png" if (assets / "cv.png").exists() else assets / "cv.ico"
         )
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
@@ -145,8 +145,23 @@ class ResumeGeneratorMainWindow(QMainWindow):
         self.prompt_tab = PromptTab()
         self.tabs.addTab(self.prompt_tab, get_icon(UIConfig.ICON_QUICK), "Prompt")
 
-        self.library_tab = LibraryTab(LibraryService(self.json_folder))
-        self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_LIBRARY), "Library")
+        try:
+            from gui.services.ai_merger import AIMerger, ProjectMergePayloadBuilder
+            from gui.services.deepseek_client import DeepSeekClient
+
+            ai_merger = AIMerger(
+                llm_client=DeepSeekClient(),
+                payload_builder=ProjectMergePayloadBuilder(),
+            )
+        except Exception as e:
+            # Fallback if no LLM config
+            print(f"AI Merger not available: {e}")
+            ai_merger = None
+
+        self.library_tab = LibraryTab(
+            LibraryService(self.json_folder, ai_merger=ai_merger)
+        )
+        self.tabs.addTab(self.library_tab, get_icon(UIConfig.ICON_AI), "AI-Library")
 
         # Bottom Panel
         self.generate_panel = QWidget()

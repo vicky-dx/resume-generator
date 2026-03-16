@@ -323,7 +323,8 @@ QListWidget#innerNav {
     padding: 2px;
 }
 QListWidget#innerNav::item {
-    padding: 8px 10px;
+    min-height: 32px;
+    padding: 6px 12px;
     font-size: 10pt;
     color: #495057;
     border-radius: 4px;

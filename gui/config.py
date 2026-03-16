@@ -81,6 +81,7 @@ class UIConfig:
     ICON_SKILLS = "fa5s.tags"
     ICON_PLUS = "fa5s.plus"
     ICON_PROMPT = "fa5s.comment-alt"
+    ICON_AI = "fa5s.magic"
 
     # ── SRP Note ──────────────────────────────────────────────────────────────
     # Widget creation helpers have been moved to gui.ui_helpers (apply_style,

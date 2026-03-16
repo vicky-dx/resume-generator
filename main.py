@@ -112,9 +112,11 @@ def main():
     # Set app-level icon so Windows taskbar picks it up
     from PySide6.QtGui import QIcon
 
-    _icon_path = get_resource_path("assets") / "cv.ico"
+    # Use PNG for QIcon because PyInstaller might not bundle the ICO image format plugin by default,
+    # which causes QIcon to silently fail to display the ICO on the taskbar.
+    _icon_path = get_resource_path("assets") / "cv.png"
     if not _icon_path.exists():
-        _icon_path = get_resource_path("assets") / "cv.png"
+        _icon_path = get_resource_path("assets") / "cv.ico"
     if _icon_path.exists():
         app.setWindowIcon(QIcon(str(_icon_path)))
 

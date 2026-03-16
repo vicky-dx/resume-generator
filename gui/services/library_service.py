@@ -1,9 +1,38 @@
 """Library service — aggregates projects and skills across all JSON template files."""
 
 import json
+import re
+import difflib
 from pathlib import Path
+from typing import Protocol
 
 from gui.models import LibraryProject, ResumeData, SkillCategory
+
+
+class IProjectMerger(Protocol):
+    """
+    Strategy for merging duplicate projects.
+    """
+
+    def merge(
+        self, new_project: LibraryProject, existing_project: LibraryProject
+    ) -> LibraryProject: ...
+
+
+class LengthBasedMerger:
+    """
+    Current logic: keeps the project with the longest description.
+    """
+
+    def merge(
+        self, new_project: LibraryProject, existing_project: LibraryProject
+    ) -> LibraryProject:
+        def _desc_len(p: LibraryProject) -> int:
+            return sum(len(line) for line in p.description)
+
+        if _desc_len(new_project) > _desc_len(existing_project):
+            return new_project
+        return existing_project
 
 
 class LibraryService:
@@ -13,8 +42,15 @@ class LibraryService:
     SRP: sole responsibility is aggregating content from JSON template files.
     """
 
-    def __init__(self, json_folder: Path):
+    def __init__(
+        self,
+        json_folder: Path,
+        merger: IProjectMerger | None = None,
+        ai_merger: IProjectMerger | None = None,
+    ):
         self._json_folder = json_folder
+        self._merger = merger or LengthBasedMerger()
+        self._ai_merger = ai_merger
 
     # ── ILibraryReader ────────────────────────────────────────────────────────
 
@@ -26,13 +62,17 @@ class LibraryService:
         _, skills = self._load_all()
         return skills
 
-    def load_all(self) -> tuple[list[LibraryProject], list[SkillCategory]]:
+    def load_all(
+        self, use_ai: bool = False
+    ) -> tuple[list[LibraryProject], list[SkillCategory]]:
         """Public single-pass loader. Intended for use with run_in_executor."""
-        return self._load_all()
+        return self._load_all(use_ai=use_ai)
 
     # ── Internal single-pass loader ───────────────────────────────────────────
 
-    def _load_all(self) -> tuple[list[LibraryProject], list[SkillCategory]]:
+    def _load_all(
+        self, use_ai: bool = False
+    ) -> tuple[list[LibraryProject], list[SkillCategory]]:
         """Parse every JSON file exactly once and return both projects and skills.
 
         This avoids the double file-read that would occur if get_all_projects()
@@ -40,6 +80,10 @@ class LibraryService:
         """
         project_candidates: dict[str, LibraryProject] = {}
         skill_merged: dict[str, list[str]] = {}
+
+        active_merger = (
+            self._ai_merger if (use_ai and self._ai_merger) else self._merger
+        )
 
         for path in sorted(self._json_folder.glob("*.json"), key=lambda f: f.name):
             try:
@@ -57,10 +101,30 @@ class LibraryService:
                     description=p.description,
                     source=path.name,
                 )
-                key = p.name.strip().lower()
-                existing = project_candidates.get(key)
-                if existing is None or self._desc_len(entry) > self._desc_len(existing):
-                    project_candidates[key] = entry
+                # Normalize name: remove anything in parentheses and strip
+                normalized_name = re.sub(r"\s*\(.*?\)", "", p.name).strip().lower()
+
+                # First, check exact match on normalized name
+                best_match_key = None
+                if normalized_name in project_candidates:
+                    best_match_key = normalized_name
+                else:
+                    # Second, fuzzy match against existing keys
+                    matches = difflib.get_close_matches(
+                        normalized_name, project_candidates.keys(), n=1, cutoff=0.75
+                    )
+                    if matches:
+                        best_match_key = matches[0]
+
+                if best_match_key is None:
+                    # Completely new project
+                    project_candidates[normalized_name] = entry
+                else:
+                    # Merge with existing
+                    existing = project_candidates[best_match_key]
+                    project_candidates[best_match_key] = active_merger.merge(
+                        entry, existing
+                    )
 
             # ── skills ────────────────────────────────────────────────────────
             for s in resume.skills:
@@ -80,10 +144,6 @@ class LibraryService:
             skills.append(SkillCategory(category=category, items=deduped))
 
         return projects, skills
-
-    @staticmethod
-    def _desc_len(project: LibraryProject) -> int:
-        return sum(len(line) for line in project.description)
 
     @staticmethod
     def _normalize_items(items: list[str]) -> list[str]:

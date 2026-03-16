@@ -56,6 +56,8 @@ class ListBasedSectionWidget(BaseSectionWidget):
 
         self.item_list = QListWidget()
         self.item_list.setObjectName("innerNav")
+        self.item_list.setWordWrap(True)
+        self.item_list.setSpacing(2)
         self.item_list.currentRowChanged.connect(self._on_row_changed)
         left_layout.addWidget(self.item_list, 1)
 

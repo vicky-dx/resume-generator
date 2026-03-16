@@ -56,6 +56,8 @@ class TemplateTab(QWidget):
 
         # Template list widget
         self.template_list = QListWidget()
+        self.template_list.setObjectName("innerNav")
+        self.template_list.setWordWrap(True)
         self.template_list.setMinimumHeight(140)
         self.template_list.setSpacing(2)
         # Double click to edit

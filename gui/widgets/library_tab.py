@@ -1,6 +1,7 @@
-"""Library tab — unified read-only view of all projects and skills across JSON files."""
+"""AI Library tab — focused completely on aggregating and intelligently merging projects via LLM."""
 
 import asyncio
+import os
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -13,14 +14,16 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QFrame,
     QTabWidget,
+    QMessageBox,
 )
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QSettings, QFileSystemWatcher
 from PySide6.QtGui import QFont
 from qasync import asyncSlot
 
 from gui.config import UIConfig
 from gui.protocols import ILibraryReader
-from gui.ui_helpers import get_icon
+from gui.ui_helpers import get_icon, make_icon_button
+from gui.widgets.provider_dialog import ProviderKeyDialog
 
 
 def _bold_label(text: str, size: int = UIConfig.FONT_NORMAL_SIZE) -> QLabel:
@@ -32,34 +35,21 @@ def _bold_label(text: str, size: int = UIConfig.FONT_NORMAL_SIZE) -> QLabel:
     return lbl
 
 
-def _tech_tags_html(tech_stack: str) -> str:
-    techs = [t.strip() for t in tech_stack.split(",") if t.strip()]
-    return "  ".join(
-        f'<span style="background:#EEF4FF;color:#0078d4;'
-        f"border:1px solid #B6D4F7;border-radius:4px;"
-        f'padding:2px 8px;font-size:9pt;">{t}</span>'
-        for t in techs
-    )
-
-
-class _ProjectDetailPanel(QScrollArea):
-    """Right panel – renders full detail of the selected project.
-
-    SRP: only responsible for displaying a single project's content.
-    """
+class ProjectDetailPanel(QScrollArea):
+    """Right panel – renders full detail of the selected project."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self._show_placeholder()
+        self.show_placeholder("← Select a project from the list")
 
-    def _show_placeholder(self) -> None:
+    def show_placeholder(self, text: str) -> None:
         w = QWidget()
         lyt = QVBoxLayout(w)
         lyt.setContentsMargins(20, 60, 20, 20)
-        lbl = QLabel("← Select a project from the list")
+        lbl = QLabel(text)
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet("color: #ADB5BD; font-style: italic;")
         lyt.addWidget(lbl)
@@ -67,23 +57,19 @@ class _ProjectDetailPanel(QScrollArea):
         self.setWidget(w)
 
     def show_project(self, project) -> None:
-        """Rebuild the detail view for the given LibraryProject."""
         w = QWidget()
         lyt = QVBoxLayout(w)
         lyt.setContentsMargins(20, 16, 20, 20)
         lyt.setSpacing(10)
 
-        # ── Name ──────────────────────────────────────────────────────────────
+        # Name
         name_lbl = _bold_label(project.name, UIConfig.FONT_SECTION_SIZE + 1)
         name_lbl.setWordWrap(True)
         name_lbl.setStyleSheet(f"color: {UIConfig.COLOR_PRIMARY};")
         lyt.addWidget(name_lbl)
 
-        # ── Meta row: year + source badge ─────────────────────────────────────
-        meta = QWidget()
-        meta_lyt = QHBoxLayout(meta)
-        meta_lyt.setContentsMargins(0, 0, 0, 0)
-        meta_lyt.setSpacing(8)
+        # Meta
+        meta_lyt = QHBoxLayout()
         if project.date:
             yr = QLabel(f"📅  {project.date}")
             yr.setStyleSheet("color: #6C757D; font-size: 10pt;")
@@ -91,257 +77,251 @@ class _ProjectDetailPanel(QScrollArea):
         meta_lyt.addStretch()
         src = QLabel(f"  {project.source}  ")
         src.setStyleSheet(
-            "background:#F1F3F5; color:#6C757D; border:1px solid #DEE2E6;"
-            " border-radius:4px; font-size:9pt; padding:1px 4px;"
+            "background:#F1F3F5; color:#6C757D; border:1px solid #DEE2E6; border-radius:4px;"
         )
         meta_lyt.addWidget(src)
-        lyt.addWidget(meta)
+        lyt.addLayout(meta_lyt)
 
-        # ── Divider ───────────────────────────────────────────────────────────
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
         sep.setStyleSheet("background:#E9ECEF; max-height:1px; border:none;")
         lyt.addWidget(sep)
 
-        # ── Technologies ──────────────────────────────────────────────────────
+        # Tech
         if project.tech_stack:
             tech_hdr = _bold_label("Technologies")
-            tech_hdr.setStyleSheet("color: #495057; margin-top: 4px;")
             lyt.addWidget(tech_hdr)
-            tags_lbl = QLabel(_tech_tags_html(project.tech_stack))
-            tags_lbl.setWordWrap(True)
-            tags_lbl.setTextFormat(Qt.TextFormat.RichText)
-            lyt.addWidget(tags_lbl)
+            techs = [t.strip() for t in project.tech_stack.split(",") if t.strip()]
+            tag_html = "  ".join(
+                f'<span style="background:#EEF4FF;color:#0078d4;border:1px solid #B6D4F7;border-radius:4px;padding:2px 8px;font-size:9pt;">{t}</span>'
+                for t in techs
+            )
+            lbl_tech = QLabel(tag_html)
+            lbl_tech.setWordWrap(True)
+            lbl_tech.setTextFormat(Qt.TextFormat.RichText)
+            lyt.addWidget(lbl_tech)
 
-        # ── Description ───────────────────────────────────────────────────────
+        # Description
         desc_hdr = _bold_label("Description")
-        desc_hdr.setStyleSheet("color: #495057; margin-top: 4px;")
         lyt.addWidget(desc_hdr)
 
         desc_text = (
-            "\n".join(project.description)
+            "\n\n".join(f"• {point}" for point in project.description)
             if project.description
             else "No description available."
         )
         desc_lbl = QLabel(desc_text)
         desc_lbl.setWordWrap(True)
-        desc_lbl.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        desc_lbl.setStyleSheet("color: #343A40;")
+        # Add some line height/spacing using CSS equivalent for Qt or just by using \n\n
+        desc_lbl.setStyleSheet("line-height: 1.4;")
         lyt.addWidget(desc_lbl)
-
         lyt.addStretch()
         self.setWidget(w)
 
 
-class _ProjectsView(QWidget):
-    """Master-detail layout: left list + right detail panel.
-
-    SRP: only responsible for rendering projects data pushed to it.
-    Does not call the reader directly — data is injected via populate().
-    """
-
-    refresh_requested = Signal()
-
+class ProjectsView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._projects: list = []
-        self._setup_ui()
+        self.projects = []
 
-    def _setup_ui(self) -> None:
         lyt = QVBoxLayout(self)
         lyt.setContentsMargins(0, 0, 0, 0)
-        lyt.setSpacing(0)
 
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setHandleWidth(1)
-        splitter.setStyleSheet("QSplitter::handle { background: #CED4DA; }")
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # ── Left: project name list ────────────────────────────────────────────
-        left = QWidget()
-        left_lyt = QVBoxLayout(left)
+        left_widget = QWidget()
+        left_lyt = QVBoxLayout(left_widget)
         left_lyt.setContentsMargins(8, 8, 8, 8)
-        left_lyt.setSpacing(6)
 
-        header_row = QHBoxLayout()
-        header_row.setContentsMargins(0, 0, 0, 0)
-        header_lbl = QLabel("All Projects")
-        header_lbl.setProperty("cssClass", "header_primary")
-        header_row.addWidget(header_lbl)
-        header_row.addStretch()
-        self._refresh_btn = QPushButton()
-        self._refresh_btn.setIcon(get_icon(UIConfig.ICON_REFRESH))
-        self._refresh_btn.setProperty("cssClass", "icon")
-        self._refresh_btn.setFixedSize(UIConfig.ICON_BTN_SIZE, UIConfig.ICON_BTN_SIZE)
-        self._refresh_btn.setToolTip("Refresh library")
-        self._refresh_btn.clicked.connect(self.refresh_requested.emit)
-        header_row.addWidget(self._refresh_btn)
-        left_lyt.addLayout(header_row)
+        self.list_widget = QListWidget()
+        self.list_widget.setObjectName("innerNav")
+        self.list_widget.setWordWrap(True)  # Fix: prevents long titles from clipping
+        self.list_widget.setSpacing(2)  # Fix: adds spacing between list items
+        self.list_widget.currentRowChanged.connect(self._on_row_changed)
+        left_lyt.addWidget(self.list_widget)
 
-        self._list = QListWidget()
-        self._list.setSpacing(2)
-        self._list.currentRowChanged.connect(self._on_row_changed)
-        left_lyt.addWidget(self._list, 1)
-        splitter.addWidget(left)
+        self.detail_panel = ProjectDetailPanel()
 
-        # ── Right: detail panel ────────────────────────────────────────────────
-        self._detail = _ProjectDetailPanel()
-        splitter.addWidget(self._detail)
+        self.splitter.addWidget(left_widget)
+        self.splitter.addWidget(self.detail_panel)
+        self.splitter.setSizes([260, 600])
+        lyt.addWidget(self.splitter)
 
-        splitter.setSizes([260, 600])
-        splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 1)
-
-        lyt.addWidget(splitter, 1)
-
-    def set_loading(self, loading: bool) -> None:
-        """Disable/enable the refresh button and clear the list while loading."""
-        self._refresh_btn.setEnabled(not loading)
-        if loading:
-            self._projects = []
-            self._list.clear()
-            self._detail._show_placeholder()
-
-    def populate(self, projects: list) -> None:
-        """Replace list contents with the supplied project data."""
-        self._projects = projects
-        self._list.clear()
+    def populate(self, projects: list):
+        self.projects = projects
+        self.list_widget.clear()
         for p in projects:
-            self._list.addItem(p.name)
+            self.list_widget.addItem(p.name)
         if projects:
-            self._list.setCurrentRow(0)
+            self.list_widget.setCurrentRow(0)
+        else:
+            self.detail_panel.show_placeholder("No projects found.")
 
-    def _on_row_changed(self, row: int) -> None:
-        if 0 <= row < len(self._projects):
-            self._detail.show_project(self._projects[row])
+    def _on_row_changed(self, row: int):
+        if 0 <= row < len(self.projects):
+            self.detail_panel.show_project(self.projects[row])
 
 
-class _SkillsView(QScrollArea):
-    """Scrollable panel showing all skills grouped by category.
-
-    SRP: only responsible for rendering skills data pushed to it.
-    Does not call the reader directly — data is injected via populate().
-    """
-
+class SkillsView(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setFrameShape(QFrame.Shape.NoFrame)
-        self._show_loading()
+        w = QWidget()
+        self.lyt = QVBoxLayout(w)
+        self.lyt.addStretch()
+        self.setWidget(w)
 
-    def _show_loading(self) -> None:
+    def populate(self, skills: list):
         w = QWidget()
         lyt = QVBoxLayout(w)
-        lyt.setContentsMargins(20, 60, 20, 20)
-        lbl = QLabel("Loading skills…")
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setStyleSheet("color: #ADB5BD; font-style: italic;")
-        lyt.addWidget(lbl)
+        if not skills:
+            lyt.addWidget(QLabel("No skills found."))
+        else:
+            for cat in skills:
+                lyt.addWidget(_bold_label(cat.category))
+                items = cat.items or []
+                tag_html = "  ".join(
+                    f'<span style="background:#EEF4FF;color:#0078d4;border:1px solid #B6D4F7;border-radius:4px;padding:3px 8px;font-size:9pt;">{item}</span>'
+                    for item in items
+                )
+                lbl = QLabel(tag_html)
+                lbl.setWordWrap(True)
+                lbl.setTextFormat(Qt.TextFormat.RichText)
+                lyt.addWidget(lbl)
         lyt.addStretch()
         self.setWidget(w)
 
-    def populate(self, skills: list) -> None:
-        """Rebuild the panel with the supplied skills data."""
-        inner = QWidget()
-        lyt = QVBoxLayout(inner)
-        lyt.setContentsMargins(20, 16, 20, 16)
-        lyt.setSpacing(16)
-
-        if not skills:
-            lbl = QLabel("No skills found.")
-            lbl.setStyleSheet("color: #ADB5BD; font-style: italic;")
-            lyt.addWidget(lbl)
-        else:
-            for cat in skills:
-                cat_lbl = _bold_label(cat.category)
-                cat_lbl.setStyleSheet(f"color: {UIConfig.COLOR_PRIMARY};")
-                lyt.addWidget(cat_lbl)
-
-                items = cat.items if cat.items else []
-                tag_html = "  ".join(
-                    f'<span style="background:#EEF4FF;color:#0078d4;'
-                    f"border:1px solid #B6D4F7;border-radius:4px;"
-                    f'padding:3px 8px;font-size:9pt;">{item}</span>'
-                    for item in items
-                )
-                tags_lbl = QLabel(tag_html)
-                tags_lbl.setWordWrap(True)
-                tags_lbl.setTextFormat(Qt.TextFormat.RichText)
-                lyt.addWidget(tags_lbl)
-
-                sep = QFrame()
-                sep.setFrameShape(QFrame.Shape.HLine)
-                sep.setStyleSheet("background:#F1F3F5; max-height:1px; border:none;")
-                lyt.addWidget(sep)
-
-        lyt.addStretch()
-        self.setWidget(inner)
-
 
 class LibraryTab(QWidget):
-    """Library tab — unified read-only collection of all resume content.
-
-    Depends only on the ILibraryReader abstraction (DIP).
-    Coordinates async loading and pushes data into _ProjectsView / _SkillsView.
-    Views never call the reader directly — all I/O is owned here (SRP).
-    """
+    """A heavily simplified AI-only implementation of the Library."""
 
     show_action_panel = False
 
     def __init__(self, library_reader: ILibraryReader, parent=None):
         super().__init__(parent)
         self._reader = library_reader
-        self._loading = False
         self._setup_ui()
-        # Trigger first load on the next event-loop tick so the window renders
-        # before any I/O starts (non-blocking startup).
-        QTimer.singleShot(0, self._async_load)
+        self._setup_file_watcher()
+
+    def _setup_file_watcher(self):
+        self.watcher = QFileSystemWatcher(self)
+        if hasattr(self._reader, "_json_folder"):
+            folder_path = str(self._reader._json_folder)
+            self.watcher.addPath(folder_path)
+            self.watcher.directoryChanged.connect(self._on_directory_changed)
+
+    def _on_directory_changed(self, path):
+        self.load_ai_btn.setText(" ⚠️ Updates Available - Refresh AI Library")
+        self.load_ai_btn.setStyleSheet(
+            f"background-color: {UIConfig.COLOR_WARNING}; color: white; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold;"
+        )
+        self.load_ai_btn.setIcon(get_icon(UIConfig.ICON_REFRESH, color="white"))
 
     def _setup_ui(self) -> None:
         lyt = QVBoxLayout(self)
-        lyt.setContentsMargins(
-            UIConfig.PAD_SMALL,
-            UIConfig.PAD_SMALL,
-            UIConfig.PAD_SMALL,
-            UIConfig.PAD_SMALL,
-        )
-        lyt.setSpacing(0)
 
-        self._projects_view = _ProjectsView()
-        self._skills_view = _SkillsView()
+        # Top toolbar
+        toolbar = QHBoxLayout()
+        title = _bold_label("AI Project Merger", 14)
+        title.setStyleSheet(f"color: {UIConfig.COLOR_PRIMARY};")
+        toolbar.addWidget(title)
+        toolbar.addStretch()
 
-        # Refresh button in _ProjectsView delegates up to this coordinator.
-        self._projects_view.refresh_requested.connect(self._async_load)
+        self.load_ai_btn = QPushButton(" Load AI Master Library")
+        self.load_ai_btn.setIcon(get_icon(UIConfig.ICON_AI, color="white"))
+        self.load_ai_btn.setProperty("cssClass", "primary")
+        self.load_ai_btn.clicked.connect(self._on_load_clicked)
+        toolbar.addWidget(self.load_ai_btn)
 
-        self._sub_tabs = QTabWidget()
-        self._sub_tabs.addTab(
-            self._projects_view,
-            get_icon(UIConfig.ICON_PROJECT),
-            "Projects",
+        self.settings_btn = make_icon_button(
+            UIConfig.ICON_EDIT,
+            size=UIConfig.ICON_BTN_SIZE,
+            tooltip="Change Provider or API Key",
         )
-        self._sub_tabs.addTab(
-            self._skills_view,
-            get_icon(UIConfig.ICON_SKILLS),
-            "Skills",
+        self.settings_btn.clicked.connect(self._change_api_key)
+        toolbar.addWidget(self.settings_btn)
+
+        lyt.addLayout(toolbar)
+
+        # Tabs for Projects / Skills
+        self.tabs = QTabWidget()
+        self.projects_view = ProjectsView()
+        self.skills_view = SkillsView()
+
+        self.tabs.addTab(
+            self.projects_view, get_icon(UIConfig.ICON_PROJECT), "Merged Projects"
         )
-        lyt.addWidget(self._sub_tabs, 1)
+        self.tabs.addTab(
+            self.skills_view, get_icon(UIConfig.ICON_SKILLS), "Aggregated Skills"
+        )
+
+        lyt.addWidget(self.tabs, 1)
+
+    def _change_api_key(self):
+        """Force open the API Key dialog to update settings."""
+        settings = QSettings("ResumeAutomation", "ResumeGenerator")
+        dialog = ProviderKeyDialog(self)
+        if dialog.exec():
+            settings.setValue("ai_provider", dialog.provider)
+            settings.setValue("ai_api_key", dialog.api_key)
+            if dialog.provider == "DeepSeek":
+                os.environ["DEEPSEEK_API_KEY"] = dialog.api_key
+            QMessageBox.information(self, "Success", "API Key updated successfully!")
 
     @asyncSlot()
-    async def _async_load(self) -> None:
-        """Load all library data off the UI thread.
+    async def _on_load_clicked(self):
+        # 1. Grab API Credentials transparently from native OS QtSettings
+        settings = QSettings("ResumeAutomation", "ResumeGenerator")
+        provider = settings.value("ai_provider", "DeepSeek")
+        api_key = settings.value("ai_api_key", "")
 
-        Guards against concurrent runs with _loading flag.
-        Calls _load_all() exactly once per refresh (single-pass).
-        """
-        if self._loading:
-            return
-        self._loading = True
-        self._projects_view.set_loading(True)
+        # Only prompt dialog if we truly don't have a backend key saved
+        if not api_key:
+            dialog = ProviderKeyDialog(self)
+            if not dialog.exec():
+                return
 
+            provider = dialog.provider
+            api_key = dialog.api_key
+
+            if not api_key:
+                QMessageBox.warning(
+                    self, "Error", "API Key is required to use the AI Merger."
+                )
+                return
+
+            # Save it so we never have to ask again
+            settings.setValue("ai_provider", provider)
+            settings.setValue("ai_api_key", api_key)
+
+        # Let the exact backend implementation know the token
+        if provider == "DeepSeek":
+            os.environ["DEEPSEEK_API_KEY"] = api_key
+
+        self.load_ai_btn.setText(" Analyzing and Merging...")
+        self.load_ai_btn.setEnabled(False)
+        self.projects_view.detail_panel.show_placeholder(
+            "AI is analyzing and merging duplicates... Please wait."
+        )
+        self.projects_view.list_widget.clear()
+
+        # 2. Run the heavy I/O off the main thread to prevent freezing
         loop = asyncio.get_running_loop()
-        projects, skills = await loop.run_in_executor(None, self._reader.load_all)
 
-        self._projects_view.populate(projects)
-        self._skills_view.populate(skills)
-        self._projects_view.set_loading(False)
-        self._loading = False
+        try:
+            # Tell LibraryService to always use AI
+            projects, skills = await loop.run_in_executor(
+                None, lambda: self._reader.load_all(use_ai=True)
+            )
+
+            # 3. Bring data back to main thread and populate exactly
+            self.projects_view.populate(projects)
+            self.skills_view.populate(skills)
+        except Exception as e:
+            QMessageBox.critical(self, "AI Merge Failed", str(e))
+            self.projects_view.detail_panel.show_placeholder("Error during AI merge.")
+        finally:
+            self.load_ai_btn.setText(" Refresh with AI")
+            self.load_ai_btn.setStyleSheet("")
+            self.load_ai_btn.setIcon(get_icon(UIConfig.ICON_AI, color="white"))
+            self.load_ai_btn.setEnabled(True)
