@@ -1,0 +1,178 @@
+{
+    "personal_info": {
+        "name": "NIKESH CHAVHAN",
+        "location": "Nagpur, India",
+        "tagline": "Data & AI Engineer | Distributed Data Systems | Streaming, LLM Pipelines & Cloud-Native Platforms",
+        "email": "vicky0x07@gmail.com",
+        "phone": "+91 7448223125",
+        "github": "https://github.com/vicky-dx",
+        "linkedin": "https://linkedin.com/in/nikesh-chavhan"
+    },
+    "summary": "Data & AI Engineer with 3+ years of experience building distributed data systems, streaming pipelines, and cloud-native services across Python, Kafka, Spark, AWS, and Kubernetes. Strong hands-on background in data modeling, batch/real-time ingestion, observability, and production reliability, with recent experience integrating LLM and agentic workflows into data platforms. Adept at partnering with product, backend, and ML teams to ship scalable systems with clear operational ownership and measurable performance gains.",
+    "skills": [
+        {
+            "category": "Programming & Scripting",
+            "items": [
+                "Python (Advanced OOP, AsyncIO)",
+                "JavaScript / TypeScript",
+                "SQL",
+                "Node.js",
+                "GoLang",
+                "C/C++",
+                "Bash Scripting & Linux Basics"
+            ]
+        },
+        {
+            "category": "Data Engineering & Warehouses",
+            "items": [
+                "Kafka",
+                "Spark (Batch & Streaming)",
+                "Databricks",
+                "PostgreSQL",
+                "Cassandra",
+                "AWS Glue",
+                "Redshift",
+                "BigQuery",
+                "Data Modeling & Warehousing"
+            ]
+        },
+        {
+            "category": "AI & Orchestration",
+            "items": [
+                "LLMs (GPT, LLaMA)",
+                "RAG Pipelines",
+                "Agentic Workflows (LangGraph, Google ADK)",
+                "Prompt Engineering",
+                "Vector Search (pgvector)",
+                "XGBoost"
+            ]
+        },
+        {
+            "category": "Cloud & DevOps",
+            "items": [
+                "AWS (S3, Lambda, Step Functions)",
+                "Docker & Kubernetes (EKS)",
+                "Terraform (IaC)",
+                "Ansible",
+                "CI/CD (Jenkins, GitHub Actions)",
+                "REST APIs",
+                "Git, Gradle, npm"
+            ]
+        },
+        {
+            "category": "Monitoring & Reliability",
+            "items": [
+                "Prometheus & Grafana",
+                "OpenTelemetry",
+                "ELK Stack",
+                "Splunk",
+                "Data Quality Frameworks (Pydantic)"
+            ]
+        }
+    ],
+    "experience": [
+        {
+            "company": "Tars Technologies",
+            "position": "Data & AI Systems Engineer",
+            "location": "Nagpur",
+            "work_type": "On-Site",
+            "duration": "Feb 2023 – Present",
+            "achievements": [
+                "Accomplished 40% lower telemetry processing latency, as measured by end-to-end batch completion time, by architecting a multi-threaded Python and Kafka ingestion platform that processes 10GB+ of raw logs daily.",
+                "Accomplished faster recovery for long-running workflows, as measured by fewer manual interventions and improved task completion reliability, by building a persistent state-driven agentic workflow system with Python, LangGraph, and PostgreSQL.",
+                "Accomplished 40% lower query latency for operational lookups, as measured by production query response time, by designing a hybrid storage layer using Cassandra for high-velocity data and PostgreSQL for metadata while migrating from Oracle.",
+                "Accomplished 40% faster deployments, as measured by release lead time, by automating Docker, Kubernetes, Terraform, and Jenkins CI/CD workflows for containerized services.",
+                "Accomplished stronger production data reliability, as measured by reduced schema and downstream data issues, by implementing a modular Python data quality framework with validation rules and strict schema governance."
+            ]
+        },
+        {
+            "company": "Nexora Fintech",
+            "position": "Data Engineer",
+            "location": "Pune",
+            "work_type": "Freelance",
+            "duration": "Apr 2022 – Dec 2022",
+            "achievements": [
+                "Accomplished 30% faster risk decisioning, as measured by approval turnaround time, by engineering a real-time Kafka and Spark Streaming pipeline for transaction scoring.",
+                "Accomplished support for 1K+ transactions per minute, as measured by sustained production throughput, by implementing a Dockerized FastAPI inference service that exposed ML models through REST APIs.",
+                "Accomplished 90% less manual monitoring effort, as measured by weekly operational hours, by integrating Prometheus, Grafana, ELK Stack, and Airflow for pipeline observability and reporting."
+            ]
+        },
+        {
+            "company": "Fornex Retail",
+            "position": "Data Engineer",
+            "location": "UK",
+            "work_type": "Remote",
+            "duration": "Aug 2021 – Mar 2022",
+            "achievements": [
+                "Accomplished processing of 500K+ daily retail records, as measured by reliable nightly batch loads, by designing an AWS S3, Glue, and Redshift ETL pipeline with structured warehouse-ready data models.",
+                "Accomplished 80% faster source onboarding, as measured by reduced setup time for new CSV feeds, by automating ingestion and schema discovery with Python Boto3 and AWS Glue Crawlers."
+            ]
+        }
+    ],
+    "education": [
+        {
+            "institution": "Shivaji Science College Nagpur",
+            "degree": "Bachelor of Computer Science (Mathematics & Statistics)",
+            "location": "",
+            "duration": "Aug 2017 – Jun 2021",
+            "gpa": "CGPA: 8/10",
+            "Relevant coursework": [
+                "Object Oriented Programming",
+                "Databases",
+                "Discrete Maths",
+                "Data Structures and Algorithms",
+                "Operating Systems",
+                "Computer Networks",
+                "Machine Learning"
+            ]
+        }
+    ],
+    "projects": [
+        {
+            "name": "Resilient A2A Orchestration Framework",
+            "technologies": "Python, LangGraph, PostgreSQL, Docker, OpenTelemetry",
+            "year": "2026",
+            "description": [
+                "Developed a fault-tolerant orchestration framework for long-running data and AI workflows with persisted state, retry handling, and recovery after failures. Designed the system to support modular services, observable execution, and safe handoffs between workflow steps."
+            ]
+        },
+        {
+            "name": "Real-Time Telemetry & Anomaly Detection System",
+            "technologies": "Kafka, Spark Streaming, Python, Docker, Kubernetes, XGBoost, Grafana, Prometheus",
+            "year": "",
+            "description": [
+                "Built an end-to-end streaming pipeline using Kafka and Spark to process high-velocity telemetry data, validate records, and surface anomalies with production-friendly monitoring. Integrated XGBoost-based inference and dashboard metrics to support faster triage and data-driven operations."
+            ]
+        },
+        {
+            "name": "Intelligent Knowledge Retrieval Pipeline (RAG Architecture)",
+            "technologies": "AWS S3, Lambda, PostgreSQL (pgvector), Python, OpenAI/AWS Bedrock APIs, Prompt Engineering",
+            "year": "2025",
+            "description": [
+                "Built an AWS-based document ingestion and retrieval pipeline that transformed 50,000+ unstructured documents into structured, searchable knowledge. Implemented hybrid retrieval with pgvector and designed prompts for LLM-driven answer generation and grounded responses."
+            ]
+        }
+    ],
+    "awards": [
+        {
+            "title": "Comprehensive DevOps Bootcamp (6-Month Training)",
+            "issuer": "",
+            "description": "Linux, Git, Jenkins (CI/CD), Docker, Kubernetes (EKS), Terraform, Ansible, Prometheus"
+        },
+        {
+            "title": "Data Engineering Professional (ongoing) on Google Cloud",
+            "issuer": "",
+            "description": ""
+        },
+        {
+            "title": "Data Engineering Associate (ongoing) on AWS",
+            "issuer": "",
+            "description": ""
+        },
+        {
+            "title": "Meta Database Engineer Professional on Coursera",
+            "issuer": "",
+            "description": ""
+        }
+    ]
+}

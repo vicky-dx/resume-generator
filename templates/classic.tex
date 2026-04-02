@@ -1,0 +1,160 @@
+% !TEX program = xelatex
+\documentclass[fontsize=<< font_size >>pt, a4paper, DIV=12]{scrartcl}
+
+\usepackage[top=<< margin_tb >>in, bottom=<< margin_tb >>in, left=<< margin_lr >>in, right=<< margin_lr >>in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{tabularx}
+\usepackage{lmodern}
+\usepackage{fontspec}
+\usepackage{enumitem}
+\setmainfont{<< font >>}
+<% if use_icons %>
+\usepackage{fontawesome5}
+<% endif %>
+
+\definecolor{sectionblue}{RGB}{<< section_color[0] >>, << section_color[1] >>, << section_color[2] >>}
+\definecolor{linkedinblue}{RGB}{0, 119, 181}
+\definecolor{githubdark}{RGB}{36, 41, 46}
+\definecolor{iconlocation}{HTML}{F01D15}
+\definecolor{iconphone}{HTML}{60BE92}
+\definecolor{iconmail}{HTML}{FCCA3D}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\renewcommand{\arraystretch}{<< (1.0 + item_spacing * 0.15) | round(2) >>}
+
+% Hyphenation settings
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\hbadness=10000
+\sloppy
+
+% Page break penalties
+\widowpenalty=10000
+\clubpenalty=10000
+\raggedbottom
+
+% KOMA-native section formatting (coloured heading + horizontal rule)
+\setkomafont{section}{\large\bfseries\color{sectionblue}}
+\renewcommand*{\sectionformat}{}
+\RedeclareSectionCommand[beforeskip=<< section_spacing >>pt, afterskip=4pt, afterindent=false]{section}
+\makeatletter
+\renewcommand*{\sectionlinesformat}[4]{%
+  \@hangfrom{\hskip #2#3}{#4}\par\nobreak
+  \nointerlineskip
+  \vskip 4pt
+  \rule{\linewidth}{0.4pt}%
+}
+\makeatother
+
+\begin{document}
+
+<% if personal_info %>
+% Header
+{\centering{\huge \textbf{<< personal_info.name >>}}\par}
+\vspace{4pt}
+\begin{tabular*}{\textwidth}{@{} l @{\extracolsep{\fill}} r @{}}
+\begin{tabular}[t]{@{}l@{}}
+<% if personal_info.location %><% if use_icons %>\makebox[1.1em][c]{\textcolor{iconlocation}{\faIcon{map-marker-alt}}}\ <% endif %><< personal_info.location >> \\<% endif %>
+<% if use_icons %>\makebox[1.1em][c]{\textcolor{iconphone}{\faIcon{phone}}}\ <% endif %><< personal_info.phone >> \\
+<% if use_icons %>\makebox[1.1em][c]{\textcolor{iconmail}{\faIcon{envelope}}}\ <% endif %><< personal_info.email >>
+\end{tabular}
+&
+\begin{tabular}[t]{@{}l@{}}
+\\
+<% if personal_info.github %>\href{<< personal_info.github >>}{<% if use_icons %>\makebox[1.1em][c]{\textcolor{githubdark}{\faIcon{github}}}\ <% endif %>github.com/<< personal_info.github.rstrip('/').split('/')[-1] >>} \\<% endif %>
+<% if personal_info.linkedin %>\href{<< personal_info.linkedin >>}{<% if use_icons %>\makebox[1.1em][c]{\textcolor{linkedinblue}{\faIcon{linkedin}}}\ <% endif %>linkedin.com/in/<< personal_info.linkedin.rstrip('/').split('/')[-1] >>} \\<% endif %>
+\end{tabular}
+\end{tabular*}
+<% endif %>
+
+<% set default_order = ["summary", "skills", "experience", "projects", "education", "awards"] %>
+<% set order = section_order if section_order else default_order %>
+
+<% for section in order %>
+
+<% if section == "summary" and summary %>
+\section*{PROFESSIONAL SUMMARY}
+{\raggedright\noindent << summary >>\par}
+<% endif %>
+
+<% if section == "skills" and skills %>
+\section*{TECHNICAL SKILLS}
+\begin{tabularx}{\textwidth}{@{}l@{\hspace{0.6em}}>{\raggedright\arraybackslash}X@{}}
+<% for skill in skills %>
+    \textcolor{sectionblue}{<< bullet >>} \textbf{<< skill.category >>:} & << skill['items'] | join(", ") >><% if not loop.last %> \\[<< item_spacing >>pt]<% endif %>
+<% endfor %>
+\end{tabularx}
+<% endif %>
+
+<% if section == "experience" and experience %>
+\section*{WORK EXPERIENCE}
+<% for exp in experience %>
+<% if not loop.first %>
+\vspace{<< entry_spacing >>pt}
+<% endif %>
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l c r}
+\textbf{<< exp.position >>} & \textbf{<< exp.company >>} & \textbf{<< exp.duration >>} \\
+\textit{<< exp.work_type >>} & \textit{<< exp.location >>} & \\
+\end{tabular*}
+
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
+<% if exp.achievements %>
+<% for ach in exp.achievements %>
+    \item << ach >>
+<% endfor %>
+<% endif %>
+\end{itemize}
+
+<% endfor %>
+<% endif %>
+
+<% if section == "projects" and projects %>
+\section*{PROJECT WORK}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
+<% for proj in projects %>
+    \item \textbf{<< proj.name >><% if proj.year %> (<< proj.year >>)<% endif %>:} << proj.description | join(" ") >>\\
+    {\small \textit{\textbf{Tech:}} << proj.technologies >>}
+<% endfor %>
+\end{itemize}
+<% endif %>
+
+<% if section == "education" and education %>
+\section*{EDUCATION}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+<% for edu in education %>
+    \item \begin{tabular*}{\linewidth}[t]{@{} l @{\extracolsep{\fill}} r @{}}
+    \textbf{<< edu.degree >>} & \textbf{<< edu.duration >>} \\
+    << edu.institution >><% if edu.location %>, \textit{<< edu.location >>}<% endif %> & << edu.gpa | default("") >> \\
+    \end{tabular*}
+    <% set _cw = edu.get("Relevant coursework") or edu.get("coursework") %>
+    <% if _cw %>
+    \par\vspace{2pt}\noindent{\small \textit{\textbf{Relevant coursework:}} {\raggedright << _cw | join(", ") >>\par}}
+    <% endif %>
+<% endfor %>
+\end{itemize}
+<% endif %>
+
+<% if section == "awards" and awards %>
+\section*{AWARDS AND CERTIFICATES}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
+<% for award in awards %>
+<% if award.description %>
+    \item \textbf{<< award.title >>:} << award.description >>
+<% else %>
+    \item << award.title >>
+<% endif %>
+<% endfor %>
+\end{itemize}
+<% endif %>
+
+<% endfor %>
+
+\end{document}
