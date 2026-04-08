@@ -32,7 +32,17 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
 
     useEffect(() => {
         try {
-            setData(JSON.parse(jsonText));
+            const parsed = JSON.parse(jsonText);
+            
+            // Auto-convert old skills format to array format
+            if (parsed.skills && typeof parsed.skills === 'object' && !Array.isArray(parsed.skills)) {
+                parsed.skills = Object.keys(parsed.skills).map(category => ({
+                    category,
+                    items: parsed.skills[category]
+                }));
+            }
+
+            setData(parsed);
             setError(null);
         } catch (e) {
             setError("JSON Parsing Error - Please fix the JSON in Editor Mode first to use the Form.");
@@ -161,7 +171,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         else if (sectionId === "experience") {
                             content = (
                                 <>
-                                    {data.experience?.map((exp: any, i: number) => (
+                                    {Array.isArray(data.experience) && data.experience.map((exp: any, i: number) => (
                                         <div key={i} className="mb-6 p-5 border border-neutral-800 bg-[#141415] rounded-xl relative group transition-all hover:border-neutral-700">
                                             <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                 <button title="Move Up" onClick={() => moveItem(["experience"], i, 'up')} disabled={i === 0} className="hover:text-blue-400 disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
@@ -185,7 +195,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         else if (sectionId === "education") {
                             content = (
                                 <>
-                                    {data.education?.map((edu: any, i: number) => (
+                                    {Array.isArray(data.education) && data.education.map((edu: any, i: number) => (
                                         <div key={i} className="mb-5 p-5 border border-neutral-800 bg-[#141415] rounded-xl relative group transition-all hover:border-neutral-700">
                                             <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                 <button title="Move Up" onClick={() => moveItem(["education"], i, 'up')} disabled={i === 0} className="hover:text-blue-400 disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
@@ -207,7 +217,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         else if (sectionId === "projects") {
                             content = (
                                 <>
-                                    {data.projects?.map((proj: any, i: number) => (
+                                    {Array.isArray(data.projects) && data.projects.map((proj: any, i: number) => (
                                         <div key={i} className="mb-6 p-5 border border-neutral-800 bg-[#141415] rounded-xl relative group transition-all hover:border-neutral-700">
                                             <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                 <button title="Move Up" onClick={() => moveItem(["projects"], i, 'up')} disabled={i === 0} className="hover:text-blue-400 disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
@@ -230,7 +240,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         else if (sectionId === "skills") {
                             content = (
                                 <>
-                                    {data.skills?.map((skill: any, i: number) => (
+                                    {Array.isArray(data.skills) && data.skills.map((skill: any, i: number) => (
                                         <div key={i} className="mb-4 p-5 border border-neutral-800 bg-[#141415] rounded-xl relative group flex flex-col gap-4 transition-all hover:border-neutral-700">
                                             <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                 <button title="Move Up" onClick={() => moveItem(["skills"], i, 'up')} disabled={i === 0} className="hover:text-blue-400 disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
@@ -242,7 +252,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                                                 <Field label="Category" value={skill.category || ""} onChange={(v) => updateField(["skills", i, "category"], v)} placeholder="e.g. Languages" />
                                             </div>
                                             <div className="pr-24 cursor-text">
-                                                <Field label="Items (Comma separated)" value={[].concat(skill.items || []).join(", ")} onChange={(v) => updateField(["new_items"], v.split(",").map((x: string) => x.trim()).filter((x: string) => x))} placeholder="Python, JavaScript, C++" />
+                                                <Field label="Items (Comma separated)" value={[].concat(skill.items || []).join(", ")} onChange={(v) => updateField(["skills", i, "items"], v.split(",").map((x: string) => x.trim()).filter((x: string) => x))} placeholder="Python, JavaScript, C++" />
                                             </div>
                                         </div>
                                     ))}
@@ -253,7 +263,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         else if (sectionId === "awards") {
                             content = (
                                 <>
-                                    {data.awards?.map((award: any, i: number) => (
+                                    {Array.isArray(data.awards) && data.awards.map((award: any, i: number) => (
                                         <div key={i} className="mb-4 p-5 border border-neutral-800 bg-[#141415] rounded-xl relative group transition-all hover:border-neutral-700">
                                             <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                 <button title="Move Up" onClick={() => moveItem(["awards"], i, 'up')} disabled={i === 0} className="hover:text-blue-400 disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
