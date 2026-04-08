@@ -111,24 +111,44 @@ ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string
 
         const finalStyle = { ...defaultStyleConfig, ...(styleConfig || {}) };
 
+        // Debug log
+        try {
+            console.log("PDF GEN DATA SKILLS:", JSON.stringify((data as any).skills, null, 2));
+            console.log("PDF GEN DATA PROJECTS:", JSON.stringify((data as any).projects, null, 2));
+        } catch (e) { }
+
         // 2. Generate LaTeX Content using our Nunjucks Builder
         const latexContent = buildLatex(data, templatesDir, templateName, finalStyle, defaultEscaper);
 
         // 3. Write LaTeX to file
         const texFilePath = path.join(buildDir, "output.tex");
+        const pdfPath = path.join(buildDir, "output.pdf");
+
+        // ALWAYS remove the old PDF so latexmk is forced to rebuild if it thinks it's cached,
+        // and we can properly verify if the current build failed to emit a file.
+        if (fs.existsSync(pdfPath)) {
+            fs.unlinkSync(pdfPath);
+        }
+
         fs.writeFileSync(texFilePath, latexContent, "utf-8");
 
-        // 4. Compile with xelatex (2 passes needed for layout/references)
-        const compileCmd = `xelatex -interaction=nonstopmode -output-directory="${buildDir}" "${texFilePath}"`;
+        // 4. Compile with latexmk (handles multiple passes automatically)
+        const compileCmd = `latexmk -f -xelatex -interaction=nonstopmode -output-directory="${buildDir}" "${texFilePath}"`;
 
-        console.log("First LaTeX compilation pass...");
-        await execAsync(compileCmd);
-
-        console.log("Second LaTeX compilation pass...");
-        await execAsync(compileCmd);
+        console.log("Running latexmk compilation...");
+        try {
+            await execAsync(compileCmd);
+        } catch (execErr: any) {
+            // latexmk (and xelatex) will often exit with a non-zero code even on 
+            // non-fatal warnings (like 'Overfull \hbox'). We should ignore the 
+            // process error if the PDF was successfully generated anyway.
+            console.warn("latexmk produced warnings/errors, checking if PDF was generated...", execErr.message?.substring(0, 200));
+        }
 
         // 5. Return the path to the generated PDF
-        const pdfPath = path.join(buildDir, "output.pdf");
+        if (!fs.existsSync(pdfPath)) {
+            throw new Error("PDF file was not found after compilation.");
+        }
 
         return { success: true, pdfPath: `file://${pdfPath}`.replace(/\\/g, "/") };
 

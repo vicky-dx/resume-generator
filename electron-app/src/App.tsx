@@ -1,9 +1,9 @@
 import Editor from "@monaco-editor/react";
+import debounce from "lodash/debounce";
 import { Code2, FileDown, FolderOpen, ListTree, Loader2, Play, Save, Settings2, X } from "lucide-react";
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import FormEditor from "./components/FormEditor";
 import { useCompileStatus } from "./hooks/useCompileStatus";
-import debounce from "lodash/debounce";
 
 const defaultJSON = `{
   "personal_info": {
@@ -47,7 +47,7 @@ const parseLatexError = (rawLog: string): string => {
   const lines = rawLog.split("\n");
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes("! Undefined control sequence.")) {
-      return `Undefined control sequence near line ${lines[i+1]?.trim() || "unknown"}`;
+      return `Undefined control sequence near line ${lines[i + 1]?.trim() || "unknown"}`;
     }
     if (lines[i].startsWith("! ")) {
       return lines[i].substring(2);
@@ -103,6 +103,27 @@ function App() {
     try {
       // 1. Parse JSON input
       const data = JSON.parse(currentJsonText);
+
+      // Normalize arrays that Nunjucks filters expect
+      if (data.skills) {
+        if (typeof data.skills === 'object' && !Array.isArray(data.skills)) {
+          data.skills = Object.keys(data.skills).map(category => ({
+            category,
+            items: Array.isArray(data.skills[category]) ? data.skills[category] : (typeof data.skills[category] === 'string' ? data.skills[category].split(',').map((s: string) => s.trim()) : [data.skills[category]])
+          }));
+        } else if (Array.isArray(data.skills)) {
+          data.skills = data.skills.map((s: any) => ({ ...s, items: Array.isArray(s.items) ? s.items : (typeof s.items === 'string' ? s.items.split(',').map((x: string) => x.trim()) : []) }));
+        }
+      }
+      if (data.projects && Array.isArray(data.projects)) {
+        data.projects = data.projects.map((p: any) => ({ ...p, description: Array.isArray(p.description) ? p.description : (typeof p.description === 'string' ? [p.description] : []) }));
+      }
+      if (data.education && Array.isArray(data.education)) {
+        data.education = data.education.map((e: any) => {
+          const cw = e["Relevant coursework"];
+          return { ...e, "Relevant coursework": Array.isArray(cw) ? cw : (typeof cw === 'string' ? cw.split(',').map((x: string) => x.trim()) : undefined) };
+        });
+      }
 
       // Pre-process extra protected terms into an array before sending
       const finalStyleConfig = {

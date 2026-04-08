@@ -20,14 +20,14 @@ import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 // Import Breakdown Components
-import { PersonalInfo } from "./FormSections/PersonalInfo";
-import { Summary } from "./FormSections/Summary";
-import { Experience } from "./FormSections/Experience";
+import { Awards } from "./FormSections/Awards";
 import { Education } from "./FormSections/Education";
+import { Experience } from "./FormSections/Experience";
+import { PersonalInfo } from "./FormSections/PersonalInfo";
 import { Projects } from "./FormSections/Projects";
 import { Skills } from "./FormSections/Skills";
-import { Awards } from "./FormSections/Awards";
 import { SortableSectionItem } from "./FormSections/SortableSectionItem";
+import { Summary } from "./FormSections/Summary";
 
 interface FormProps {
     jsonText: string;
@@ -43,12 +43,12 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         if (isSyncing.current) return;
         try {
             const parsed = JSON.parse(jsonText);
-            
+
             // Auto-convert old skills format to array format
             if (parsed.skills && typeof parsed.skills === 'object' && !Array.isArray(parsed.skills)) {
                 parsed.skills = Object.keys(parsed.skills).map(category => ({
                     category,
-                    items: parsed.skills[category]
+                    items: Array.isArray(parsed.skills[category]) ? parsed.skills[category] : (typeof parsed.skills[category] === 'string' ? parsed.skills[category].split(',') : [parsed.skills[category]])
                 }));
             }
 
@@ -63,7 +63,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         isSyncing.current = true;
         setData(newData);
         onChange(JSON.stringify(newData, null, 2));
-        
+
         // Use a short timeout to let the parent update component state before accepting new external changes
         setTimeout(() => {
             isSyncing.current = false;
