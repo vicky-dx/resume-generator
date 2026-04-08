@@ -1,7 +1,9 @@
 import Editor from "@monaco-editor/react";
 import { Code2, FileDown, FolderOpen, ListTree, Loader2, Play, Save, Settings2, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import FormEditor from "./components/FormEditor";
+import { useCompileStatus } from "./hooks/useCompileStatus";
+import debounce from "lodash/debounce";
 
 const defaultJSON = `{
   "personal_info": {
@@ -40,11 +42,25 @@ const rgbToHex = (rgb: number[]) => {
   }).join("");
 };
 
+const parseLatexError = (rawLog: string): string => {
+  if (!rawLog) return "Unknown Error";
+  const lines = rawLog.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("! Undefined control sequence.")) {
+      return `Undefined control sequence near line ${lines[i+1]?.trim() || "unknown"}`;
+    }
+    if (lines[i].startsWith("! ")) {
+      return lines[i].substring(2);
+    }
+  }
+  return "Compilation failed. (Check raw logs for details)";
+};
+
 function App() {
   const [jsonText, setJsonText] = useState(defaultJSON);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [isCompiling, setIsCompiling] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [lastPdfUrl, setLastPdfUrl] = useState<string | null>(null);
+  const { setStatus, errorMsg, setErrorMsg, isCompiling } = useCompileStatus();
   const [viewMode, setViewMode] = useState<"json" | "form">("form");
 
   // Tweaks state
@@ -80,29 +96,33 @@ function App() {
     }));
   };
 
-  const handleCompile = useCallback(async () => {
-    setIsCompiling(true);
+  const compileResume = async (currentJsonText: string, currentTemplate: string, currentStyleConfig: any) => {
+    setStatus("compiling");
     setErrorMsg(null);
 
     try {
       // 1. Parse JSON input
-      const data = JSON.parse(jsonText);
+      const data = JSON.parse(currentJsonText);
 
       // Pre-process extra protected terms into an array before sending
       const finalStyleConfig = {
-        ...styleConfig,
-        extra_protected_terms: styleConfig.extra_protected_terms
-          ? styleConfig.extra_protected_terms.split(",").map(t => t.trim()).filter(Boolean)
+        ...currentStyleConfig,
+        extra_protected_terms: currentStyleConfig.extra_protected_terms
+          ? currentStyleConfig.extra_protected_terms.split(",").map((t: string) => t.trim()).filter(Boolean)
           : []
       };
 
       // 2. Send via IPC to Electron Main Process
-      const result = await window.electronAPI.generatePdf(data, templateName, finalStyleConfig);
+      const result = await window.electronAPI.generatePdf(data, currentTemplate, finalStyleConfig);
 
       if (result.success) {
-        setPdfUrl(`${result.pdfPath}?t=${Date.now()}`);
+        const newUrl = `${result.pdfPath}?t=${Date.now()}`;
+        setPdfUrl(newUrl);
+        setLastPdfUrl(newUrl);
+        setStatus("done");
       } else {
-        setErrorMsg(result.error || "Unknown compilation error");
+        setErrorMsg(parseLatexError(result.error || ""));
+        setStatus("error");
       }
     } catch (e: unknown) {
       if (e instanceof SyntaxError) {
@@ -110,9 +130,24 @@ function App() {
       } else {
         setErrorMsg((e as Error).message);
       }
-    } finally {
-      setIsCompiling(false);
+      setStatus("error");
     }
+  };
+
+  const debouncedCompile = useRef(
+    debounce((json: string, template: string, style: any) => {
+      compileResume(json, template, style);
+    }, 1000)
+  ).current;
+
+  // Auto-compile when relevant states change
+  useEffect(() => {
+    debouncedCompile(jsonText, templateName, styleConfig);
+  }, [jsonText, templateName, styleConfig]);
+
+  const handleCompile = useCallback(() => {
+    debouncedCompile.cancel();
+    compileResume(jsonText, templateName, styleConfig);
   }, [jsonText, templateName, styleConfig]);
 
 
@@ -419,24 +454,27 @@ function App() {
         </div>
 
         <div className="flex-1 bg-[#525659] flex justify-center w-full h-full relative">
-          {pdfUrl ? (
+          {pdfUrl || lastPdfUrl ? (
             <iframe
-              src={pdfUrl}
+              src={pdfUrl || lastPdfUrl || undefined}
               className="w-full h-full border-none m-0 p-0"
               title="PDF Preview"
             />
           ) : (
-            <div className="m-auto flex items-center flex-col text-neutral-400 gap-3 opacity-50">
+            <div className="m-auto flex flex-col items-center justify-center text-neutral-400 gap-3 opacity-50 relative z-0">
               <FileDown className="w-12 h-12" />
               <div className="text-sm">No PDF Generated</div>
+              <div className="text-xs text-neutral-500">Edit form or JSON to generate</div>
             </div>
           )}
 
           {isCompiling && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-              <div className="bg-neutral-900 px-6 py-4 rounded-xl shadow-2xl flex flex-col items-center gap-3 border border-neutral-700">
+            <div className="absolute inset-0 bg-neutral-900/40 flex items-center justify-center backdrop-blur-sm z-10 transition-all duration-300">
+              <div className="bg-neutral-900 border border-neutral-700 px-6 py-4 rounded-xl shadow-2xl flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                <span className="text-sm font-medium text-neutral-300 tracking-wide animate-pulse">Running xelatex...</span>
+                <span className="text-sm font-bold tracking-widest text-neutral-300 uppercase animate-pulse">
+                  Compiling PDF...
+                </span>
               </div>
             </div>
           )}
