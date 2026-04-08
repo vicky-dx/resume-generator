@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const execAsync = util.promisify(exec);
+let currentAbortController: AbortController | null = null;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -98,11 +99,35 @@ ipcMain.handle("save-json", async (event, content: string, defaultPath?: string)
 
 ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string = "classic.tex", styleConfig?: unknown) => {
     try {
-        // 1. Setup Build Directory
+        // 0. Cancel previous job if running
+        if (currentAbortController) {
+            console.log("Cancelling previous compilation job...");
+            currentAbortController.abort();
+        }
+        currentAbortController = new AbortController();
+        const { signal } = currentAbortController;
+
+        // 1. Setup Build Directory with Unique Job Pattern
+        const jobId = Date.now().toString();
         const buildDir = path.join(app.getPath("temp"), "resume-builder");
         if (!fs.existsSync(buildDir)) {
             fs.mkdirSync(buildDir, { recursive: true });
         }
+
+        // Clean up VERY old leftover files asynchronously so they don't bloat the temp drive
+        fs.readdir(buildDir, (err, files) => {
+            if (!err) {
+                files.forEach(f => {
+                    const fp = path.join(buildDir, f);
+                    fs.stat(fp, (e, stats) => {
+                        // Delete files older than 1 hour to prevent breaking iframe and saving space
+                        if (!e && stats.mtimeMs < Date.now() - 3600000) {
+                            fs.unlink(fp, () => {});
+                        }
+                    });
+                });
+            }
+        });
 
         // Optional: We can mock templates location here for now
         // Expecting templates to be in `../templates` relative to app root
@@ -121,24 +146,22 @@ ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string
         const latexContent = buildLatex(data, templatesDir, templateName, finalStyle, defaultEscaper);
 
         // 3. Write LaTeX to file
-        const texFilePath = path.join(buildDir, "output.tex");
-        const pdfPath = path.join(buildDir, "output.pdf");
-
-        // ALWAYS remove the old PDF so latexmk is forced to rebuild if it thinks it's cached,
-        // and we can properly verify if the current build failed to emit a file.
-        if (fs.existsSync(pdfPath)) {
-            fs.unlinkSync(pdfPath);
-        }
+        const texFilePath = path.join(buildDir, `output-${jobId}.tex`);
+        const pdfPath = path.join(buildDir, `output-${jobId}.pdf`);
 
         fs.writeFileSync(texFilePath, latexContent, "utf-8");
 
         // 4. Compile with latexmk (handles multiple passes automatically)
         const compileCmd = `latexmk -f -xelatex -interaction=nonstopmode -output-directory="${buildDir}" "${texFilePath}"`;
 
-        console.log("Running latexmk compilation...");
+        console.log(`Running latexmk compilation... (Job: ${jobId})`);
         try {
-            await execAsync(compileCmd);
+            await execAsync(compileCmd, { signal });
         } catch (execErr: any) {
+            if (execErr.name === 'AbortError') {
+                console.log(`Job ${jobId} was cancelled.`);
+                return { success: false, error: "Compilation Cancelled", canceled: true };
+            }
             // latexmk (and xelatex) will often exit with a non-zero code even on 
             // non-fatal warnings (like 'Overfull \hbox'). We should ignore the 
             // process error if the PDF was successfully generated anyway.

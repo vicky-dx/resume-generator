@@ -1,168 +1,96 @@
-import { exec } from "child_process";
-import { BrowserWindow, app, dialog, ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import util from "util";
-import nunjucks from "nunjucks";
+import { exec as e } from "child_process";
+import { BrowserWindow as t, app as n, dialog as r, ipcMain as i } from "electron";
+import a from "fs";
+import o from "path";
+import { fileURLToPath as s } from "url";
+import c from "util";
+import l from "nunjucks";
 //#region src/lib/escaper.ts
-var DEFAULT_PROTECTED_TERMS = [
-	"Kubernetes",
-	"Docker",
-	"Terraform",
-	"Airflow",
-	"Kafka",
-	"Spark",
-	"Redshift",
-	"PostgreSQL",
-	"MongoDB",
-	"FastAPI",
-	"XGBoost",
-	"LightGBM",
-	"Snowflake",
-	"Grafana",
-	"Prometheus",
-	"Jenkins",
-	"GitHub",
-	"GitLab",
-	"Tableau",
-	"Streamlit",
-	"Boto3",
-	"Python",
-	"JavaScript",
-	"TypeScript",
-	"auto-scaling",
-	"ETL",
-	"GenAI",
-	"LLMs",
-	"ChatGPT",
-	"OpenAI",
-	"machine learning",
-	"deep learning",
-	"data engineering",
-	"MLOps",
-	"microservices",
-	"serverless",
-	"real-time",
-	"end-to-end"
-];
-var DEFAULT_CHAR_MAP = {
+var u = /* @__PURE__ */ "Kubernetes.Docker.Terraform.Airflow.Kafka.Spark.Redshift.PostgreSQL.MongoDB.FastAPI.XGBoost.LightGBM.Snowflake.Grafana.Prometheus.Jenkins.GitHub.GitLab.Tableau.Streamlit.Boto3.Python.JavaScript.TypeScript.auto-scaling.ETL.GenAI.LLMs.ChatGPT.OpenAI.machine learning.deep learning.data engineering.MLOps.microservices.serverless.real-time.end-to-end".split("."), d = {
 	"&": "\\&",
 	"%": "\\%",
-	"$": "\\$",
+	$: "\\$",
 	"#": "\\#",
-	"_": "\\_",
+	_: "\\_",
 	"{": "\\{",
 	"}": "\\}",
 	"~": "\\textasciitilde{}",
 	"^": "\\^{}"
-};
-var LatexCharEscaper = class {
+}, f = class {
 	charMap;
-	constructor(charMap) {
-		this.charMap = charMap;
+	constructor(e) {
+		this.charMap = e;
 	}
-	escape(text) {
-		let result = text;
-		result = result.replace(/->/g, "<<<ARROW>>>");
-		result = result.replace(/---/g, "<<<EMDASH>>>");
-		result = result.replace(/--/g, "<<<ENDASH>>>");
-		const pattern = new RegExp(`([${Object.keys(this.charMap).map((c) => "\\" + c).join("")}])`, "g");
-		result = result.replace(pattern, (match) => this.charMap[match]);
-		result = result.replace(/<<<ARROW>>>/g, "$\\rightarrow$");
-		result = result.replace(/<<<ENDASH>>>/g, "--");
-		result = result.replace(/<<<EMDASH>>>/g, "---");
-		return result;
+	escape(e) {
+		let t = e;
+		t = t.replace(/->/g, "<<<ARROW>>>"), t = t.replace(/---/g, "<<<EMDASH>>>"), t = t.replace(/--/g, "<<<ENDASH>>>");
+		let n = RegExp(`([${Object.keys(this.charMap).map((e) => "\\" + e).join("")}])`, "g");
+		return t = t.replace(n, (e) => this.charMap[e]), t = t.replace(/<<<ARROW>>>/g, "$\\rightarrow$"), t = t.replace(/<<<ENDASH>>>/g, "--"), t = t.replace(/<<<EMDASH>>>/g, "---"), t;
 	}
-};
-var MarkupConverter = class {
-	convert(text) {
-		let result = text;
-		result = result.replace(/\*\*\*(.+?)\*\*\*/g, (_, p1) => `\\textbf{\\textit{${p1}}}`);
-		result = result.replace(/\*\*(.+?)\*\*/g, (_, p1) => `\\textbf{${p1}}`);
-		result = result.replace(/\*([^*\n]+?)\*/g, (_, p1) => `\\textit{${p1}}`);
-		return result;
+}, p = class {
+	convert(e) {
+		let t = e;
+		return t = t.replace(/\*\*\*(.+?)\*\*\*/g, (e, t) => `\\textbf{\\textit{${t}}}`), t = t.replace(/\*\*(.+?)\*\*/g, (e, t) => `\\textbf{${t}}`), t = t.replace(/\*([^*\n]+?)\*/g, (e, t) => `\\textit{${t}}`), t;
 	}
-};
-var TermProtector = class {
+}, m = class {
 	protectedTerms;
 	track;
-	constructor(terms, track = true) {
-		this.track = track;
-		this.protectedTerms = new Set(terms.filter((t) => t.trim().length > 0));
+	constructor(e, t = !0) {
+		this.track = t, this.protectedTerms = new Set(e.filter((e) => e.trim().length > 0));
 	}
-	protect(text) {
-		if (this.protectedTerms.size === 0) return text;
-		let result = text;
-		for (const term of this.protectedTerms) {
-			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-			const regex = new RegExp(`\\b(${escapedTerm})\\b`, "gi");
-			result = result.replace(regex, (match) => {
-				return `\\mbox{${match}}`;
-			});
+	protect(e) {
+		if (this.protectedTerms.size === 0) return e;
+		let t = e;
+		for (let e of this.protectedTerms) {
+			let n = e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), r = RegExp(`\\b(${n})\\b`, "gi");
+			t = t.replace(r, (e) => `\\mbox{${e}}`);
 		}
-		return result;
+		return t;
 	}
-};
-var LatexEscaper = class {
+}, h = class {
 	charEscaper;
 	markupConverter;
 	termProtector;
-	constructor(extraTerms = []) {
-		this.charEscaper = new LatexCharEscaper(DEFAULT_CHAR_MAP);
-		this.markupConverter = new MarkupConverter();
-		this.termProtector = new TermProtector([...DEFAULT_PROTECTED_TERMS, ...extraTerms], true);
+	constructor(e = []) {
+		this.charEscaper = new f(d), this.markupConverter = new p(), this.termProtector = new m([...u, ...e], !0);
 	}
-	escape(text) {
-		if (!text || typeof text !== "string") return text;
-		let result = this.charEscaper.escape(text);
-		result = this.markupConverter.convert(result);
-		result = this.termProtector.protect(result);
-		return result;
+	escape(e) {
+		if (!e || typeof e != "string") return e;
+		let t = this.charEscaper.escape(e);
+		return t = this.markupConverter.convert(t), t = this.termProtector.protect(t), t;
 	}
-	recursiveEscape = (val) => {
-		if (typeof val === "string") return this.escape(val);
-		if (Array.isArray(val)) return val.map((item) => this.recursiveEscape(item)).filter((item) => item !== void 0 && item !== "");
-		if (val && typeof val === "object") {
-			const escapedObj = {};
-			for (const [key, value] of Object.entries(val)) escapedObj[key] = this.recursiveEscape(value);
-			return escapedObj;
+	recursiveEscape = (e) => {
+		if (typeof e == "string") return this.escape(e);
+		if (Array.isArray(e)) return e.map((e) => this.recursiveEscape(e)).filter((e) => e !== void 0 && e !== "");
+		if (e && typeof e == "object") {
+			let t = {};
+			for (let [n, r] of Object.entries(e)) t[n] = this.recursiveEscape(r);
+			return t;
 		}
-		return val;
+		return e;
 	};
-};
-var defaultEscaper = new LatexEscaper();
-//#endregion
-//#region src/lib/builder.ts
-if (!String.prototype.rstrip) String.prototype.rstrip = function(chars) {
-	if (!chars) return this.trimEnd();
-	const escaped = chars.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const regex = new RegExp(`[${escaped}]+$`);
-	return this.replace(regex, "");
-};
-if (!String.prototype.lstrip) String.prototype.lstrip = function(chars) {
-	if (!chars) return this.trimStart();
-	const escaped = chars.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const regex = new RegExp(`^[${escaped}]+`);
-	return this.replace(regex, "");
-};
-if (!String.prototype.startswith) String.prototype.startswith = String.prototype.startsWith;
-if (!String.prototype.endswith) String.prototype.endswith = String.prototype.endsWith;
-if (!String.prototype.upper) String.prototype.upper = String.prototype.toUpperCase;
-if (!String.prototype.lower) String.prototype.lower = String.prototype.toLowerCase;
-var originalSplit = String.prototype.split;
-String.prototype.split = function(separator, limit) {
-	const res = originalSplit.call(this, separator, limit);
-	Object.defineProperty(res, "-1", {
+}, g = new h();
+String.prototype.rstrip || (String.prototype.rstrip = function(e) {
+	if (!e) return this.trimEnd();
+	let t = e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), n = RegExp(`[${t}]+$`);
+	return this.replace(n, "");
+}), String.prototype.lstrip || (String.prototype.lstrip = function(e) {
+	if (!e) return this.trimStart();
+	let t = e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), n = RegExp(`^[${t}]+`);
+	return this.replace(n, "");
+}), String.prototype.startswith || (String.prototype.startswith = String.prototype.startsWith), String.prototype.endswith || (String.prototype.endswith = String.prototype.endsWith), String.prototype.upper || (String.prototype.upper = String.prototype.toUpperCase), String.prototype.lower || (String.prototype.lower = String.prototype.toLowerCase);
+var _ = String.prototype.split;
+String.prototype.split = function(e, t) {
+	let n = _.call(this, e, t);
+	return Object.defineProperty(n, "-1", {
 		get: function() {
 			return this[this.length - 1];
 		},
-		enumerable: false,
-		configurable: true
-	});
-	return res;
+		enumerable: !1,
+		configurable: !0
+	}), n;
 };
-var defaultStyleConfig = {
+var v = {
 	font: "Calibri",
 	font_size: 11,
 	section_color: [
@@ -177,16 +105,11 @@ var defaultStyleConfig = {
 	entry_spacing: 8,
 	bullet_indent: 1.2,
 	bullet: "•",
-	use_icons: false,
+	use_icons: !1,
 	extra_protected_terms: []
 };
-/**
-* Configure Nunjucks Environment with LaTeX-safe delimiters
-* Equivalent to python's JinjaEnvConfigurator
-*/
-function buildNunjucksEnv(templateDir, style, escaper) {
-	const loader = new nunjucks.FileSystemLoader(templateDir, { noCache: true });
-	const env = new nunjucks.Environment(loader, {
+function y(e, t, n) {
+	let r = new l.FileSystemLoader(e, { noCache: !0 }), i = new l.Environment(r, {
 		tags: {
 			blockStart: "<%",
 			blockEnd: "%>",
@@ -195,95 +118,62 @@ function buildNunjucksEnv(templateDir, style, escaper) {
 			commentStart: "<#",
 			commentEnd: "#>"
 		},
-		trimBlocks: true,
-		lstripBlocks: true,
-		autoescape: false
+		trimBlocks: !0,
+		lstripBlocks: !0,
+		autoescape: !1
 	});
-	env.addFilter("escape_latex", (val) => escaper.recursiveEscape(val));
-	env.addGlobal("font", style.font);
-	env.addGlobal("font_size", style.font_size);
-	env.addGlobal("section_color", style.section_color);
-	env.addGlobal("margin_tb", style.margin_tb);
-	env.addGlobal("margin_lr", style.margin_lr);
-	env.addGlobal("item_spacing", style.item_spacing);
-	env.addGlobal("section_spacing", style.section_spacing);
-	env.addGlobal("entry_spacing", style.entry_spacing);
-	env.addGlobal("bullet_indent", style.bullet_indent);
-	env.addGlobal("bullet", style.bullet);
-	env.addGlobal("use_icons", style.use_icons);
-	return env;
+	return i.addFilter("escape_latex", (e) => n.recursiveEscape(e)), i.addGlobal("font", t.font), i.addGlobal("font_size", t.font_size), i.addGlobal("section_color", t.section_color), i.addGlobal("margin_tb", t.margin_tb), i.addGlobal("margin_lr", t.margin_lr), i.addGlobal("item_spacing", t.item_spacing), i.addGlobal("section_spacing", t.section_spacing), i.addGlobal("entry_spacing", t.entry_spacing), i.addGlobal("bullet_indent", t.bullet_indent), i.addGlobal("bullet", t.bullet), i.addGlobal("use_icons", t.use_icons), i;
 }
-/**
-* Helper to recursively add .get() to all objects in the data payload
-* This avoids mutating the global Object.prototype which crashes Electron.
-*/
-function addPythonGetPolyfill(obj) {
-	if (obj !== null && typeof obj === "object") if (Array.isArray(obj)) obj.forEach(addPythonGetPolyfill);
+function b(e) {
+	if (typeof e == "object" && e) if (Array.isArray(e)) e.forEach(b);
 	else {
-		if (!obj.get) Object.defineProperty(obj, "get", {
-			value: function(key, defaultValue = null) {
-				return this[key] !== void 0 ? this[key] : defaultValue;
+		e.get || Object.defineProperty(e, "get", {
+			value: function(e, t = null) {
+				return this[e] === void 0 ? t : this[e];
 			},
-			enumerable: false,
-			writable: true,
-			configurable: true
+			enumerable: !1,
+			writable: !0,
+			configurable: !0
 		});
-		for (const key of Object.keys(obj)) addPythonGetPolyfill(obj[key]);
+		for (let t of Object.keys(e)) b(e[t]);
 	}
-	return obj;
+	return e;
 }
-/**
-* Main function to generate the final LaTeX string from JSON data.
-* Think of it as the JinjaLatexDocumentBuilder logic.
-*/
-function buildLatex(data, templateDir, templateName, style = defaultStyleConfig, escaper = new LatexEscaper()) {
-	const env = buildNunjucksEnv(templateDir, style, escaper);
-	const compatibleData = addPythonGetPolyfill(escaper.recursiveEscape(data));
-	const fullContextPayload = {
-		...style,
-		...compatibleData
+function x(e, t, n, r = v, i = new h()) {
+	let a = y(t, r, i), o = b(i.recursiveEscape(e)), s = {
+		...r,
+		...o
 	};
-	return env.render(templateName, fullContextPayload);
+	return a.render(n, s);
 }
 //#endregion
 //#region electron/main.ts
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
-var execAsync = util.promisify(exec);
-var mainWindow = null;
-function createWindow() {
-	mainWindow = new BrowserWindow({
+var S = s(import.meta.url), C = o.dirname(S), w = c.promisify(e), T = null, E = null;
+function D() {
+	E = new t({
 		width: 1200,
 		height: 800,
 		webPreferences: {
-			preload: path.join(__dirname, "preload.js"),
-			nodeIntegration: false,
-			contextIsolation: true,
-			sandbox: false,
-			webSecurity: false
+			preload: o.join(C, "preload.js"),
+			nodeIntegration: !1,
+			contextIsolation: !0,
+			sandbox: !1,
+			webSecurity: !1
 		}
-	});
-	mainWindow.setMenu(null);
-	if (process.env.VITE_DEV_SERVER_URL) mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-	else mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+	}), E.setMenu(null), process.env.VITE_DEV_SERVER_URL ? E.loadURL(process.env.VITE_DEV_SERVER_URL) : E.loadFile(o.join(C, "../dist/index.html"));
 }
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch("log-level", "3");
-app.whenReady().then(() => {
-	createWindow();
-	app.on("activate", () => {
-		if (BrowserWindow.getAllWindows().length === 0) createWindow();
+n.disableHardwareAcceleration(), n.commandLine.appendSwitch("log-level", "3"), n.whenReady().then(() => {
+	D(), n.on("activate", () => {
+		t.getAllWindows().length === 0 && D();
 	});
-});
-app.on("window-all-closed", () => {
-	if (process.platform !== "darwin") app.quit();
-});
-ipcMain.handle("open-json", async () => {
-	if (!mainWindow) return {
-		success: false,
+}), n.on("window-all-closed", () => {
+	process.platform !== "darwin" && n.quit();
+}), i.handle("open-json", async () => {
+	if (!E) return {
+		success: !1,
 		error: "No window"
 	};
-	const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+	let { canceled: e, filePaths: t } = await r.showOpenDialog(E, {
 		title: "Open Resume JSON",
 		filters: [{
 			name: "JSON Files",
@@ -291,99 +181,100 @@ ipcMain.handle("open-json", async () => {
 		}],
 		properties: ["openFile"]
 	});
-	if (canceled || filePaths.length === 0) return {
-		success: false,
-		canceled: true
+	if (e || t.length === 0) return {
+		success: !1,
+		canceled: !0
 	};
 	try {
 		return {
-			success: true,
-			data: fs.readFileSync(filePaths[0], "utf-8"),
-			filePath: filePaths[0]
+			success: !0,
+			data: a.readFileSync(t[0], "utf-8"),
+			filePath: t[0]
 		};
-	} catch (error) {
+	} catch (e) {
 		return {
-			success: false,
-			error: error.message
+			success: !1,
+			error: e.message
 		};
 	}
-});
-ipcMain.handle("save-json", async (event, content, defaultPath) => {
-	if (!mainWindow) return {
-		success: false,
+}), i.handle("save-json", async (e, t, n) => {
+	if (!E) return {
+		success: !1,
 		error: "No window"
 	};
-	const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+	let { canceled: i, filePath: o } = await r.showSaveDialog(E, {
 		title: "Save Resume JSON",
-		defaultPath: defaultPath || "resume.json",
+		defaultPath: n || "resume.json",
 		filters: [{
 			name: "JSON Files",
 			extensions: ["json"]
 		}]
 	});
-	if (canceled || !filePath) return {
-		success: false,
-		canceled: true
+	if (i || !o) return {
+		success: !1,
+		canceled: !0
 	};
 	try {
-		fs.writeFileSync(filePath, content, "utf-8");
-		return {
-			success: true,
-			filePath
+		return a.writeFileSync(o, t, "utf-8"), {
+			success: !0,
+			filePath: o
 		};
-	} catch (error) {
+	} catch (e) {
 		return {
-			success: false,
-			error: error.message
+			success: !1,
+			error: e.message
 		};
 	}
-});
-ipcMain.handle("generate-pdf", async (event, data, templateName = "classic.tex", styleConfig) => {
+}), i.handle("generate-pdf", async (e, t, r = "classic.tex", i) => {
 	try {
-		const buildDir = path.join(app.getPath("temp"), "resume-builder");
-		if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
-		const templatesDir = path.join(app.getAppPath(), "../templates");
-		const finalStyle = {
-			...defaultStyleConfig,
-			...styleConfig || {}
+		T && (console.log("Cancelling previous compilation job..."), T.abort()), T = new AbortController();
+		let { signal: e } = T, s = Date.now().toString(), c = o.join(n.getPath("temp"), "resume-builder");
+		a.existsSync(c) || a.mkdirSync(c, { recursive: !0 }), a.readdir(c, (e, t) => {
+			e || t.forEach((e) => {
+				let t = o.join(c, e);
+				a.stat(t, (e, n) => {
+					!e && n.mtimeMs < Date.now() - 36e5 && a.unlink(t, () => {});
+				});
+			});
+		});
+		let l = o.join(n.getAppPath(), "../templates"), u = {
+			...v,
+			...i || {}
 		};
 		try {
-			console.log("PDF GEN DATA SKILLS:", JSON.stringify(data.skills, null, 2));
-			console.log("PDF GEN DATA PROJECTS:", JSON.stringify(data.projects, null, 2));
-		} catch (e) {}
-		const latexContent = buildLatex(data, templatesDir, templateName, finalStyle, defaultEscaper);
-		const texFilePath = path.join(buildDir, "output.tex");
-		const pdfPath = path.join(buildDir, "output.pdf");
-		if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
-		fs.writeFileSync(texFilePath, latexContent, "utf-8");
-		const compileCmd = `latexmk -f -xelatex -interaction=nonstopmode -output-directory="${buildDir}" "${texFilePath}"`;
-		console.log("Running latexmk compilation...");
+			console.log("PDF GEN DATA SKILLS:", JSON.stringify(t.skills, null, 2)), console.log("PDF GEN DATA PROJECTS:", JSON.stringify(t.projects, null, 2));
+		} catch {}
+		let d = x(t, l, r, u, g), f = o.join(c, `output-${s}.tex`), p = o.join(c, `output-${s}.pdf`);
+		a.writeFileSync(f, d, "utf-8");
+		let m = `latexmk -f -xelatex -interaction=nonstopmode -output-directory="${c}" "${f}"`;
+		console.log(`Running latexmk compilation... (Job: ${s})`);
 		try {
-			await execAsync(compileCmd);
-		} catch (execErr) {
-			console.warn("latexmk produced warnings/errors, checking if PDF was generated...", execErr.message?.substring(0, 200));
+			await w(m, { signal: e });
+		} catch (e) {
+			if (e.name === "AbortError") return console.log(`Job ${s} was cancelled.`), {
+				success: !1,
+				error: "Compilation Cancelled",
+				canceled: !0
+			};
+			console.warn("latexmk produced warnings/errors, checking if PDF was generated...", e.message?.substring(0, 200));
 		}
-		if (!fs.existsSync(pdfPath)) throw new Error("PDF file was not found after compilation.");
+		if (!a.existsSync(p)) throw Error("PDF file was not found after compilation.");
 		return {
-			success: true,
-			pdfPath: `file://${pdfPath}`.replace(/\\/g, "/")
+			success: !0,
+			pdfPath: `file://${p}`.replace(/\\/g, "/")
 		};
-	} catch (error) {
-		console.error("PDF Generation Error:", error);
-		return {
-			success: false,
-			error: error.message || error.toString()
+	} catch (e) {
+		return console.error("PDF Generation Error:", e), {
+			success: !1,
+			error: e.message || e.toString()
 		};
 	}
-});
-ipcMain.handle("save-pdf", async (event, pdfUrl) => {
-	if (!mainWindow) return {
-		success: false,
+}), i.handle("save-pdf", async (e, t) => {
+	if (!E) return {
+		success: !1,
 		error: "No window"
 	};
-	const cleanUrl = pdfUrl.split("?")[0];
-	const sourcePath = fileURLToPath(cleanUrl);
-	const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+	let n = t.split("?")[0], i = s(n), { canceled: o, filePath: c } = await r.showSaveDialog(E, {
 		title: "Save PDF",
 		defaultPath: "resume.pdf",
 		filters: [{
@@ -391,20 +282,19 @@ ipcMain.handle("save-pdf", async (event, pdfUrl) => {
 			extensions: ["pdf"]
 		}]
 	});
-	if (canceled || !filePath) return {
-		success: false,
-		canceled: true
+	if (o || !c) return {
+		success: !1,
+		canceled: !0
 	};
 	try {
-		fs.copyFileSync(sourcePath, filePath);
-		return {
-			success: true,
-			filePath
+		return a.copyFileSync(i, c), {
+			success: !0,
+			filePath: c
 		};
-	} catch (error) {
+	} catch (e) {
 		return {
-			success: false,
-			error: error.message
+			success: !1,
+			error: e.message
 		};
 	}
 });

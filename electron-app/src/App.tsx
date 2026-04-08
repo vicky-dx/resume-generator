@@ -141,6 +141,9 @@ function App() {
         setPdfUrl(newUrl);
         setLastPdfUrl(newUrl);
         setStatus("done");
+      } else if (result.canceled) {
+        // Silently ignore canceled compilations (since it implies a new one just started)
+        console.log("Previous compilation canceled smoothly.");
       } else {
         setErrorMsg(parseLatexError(result.error || ""));
         setStatus("error");
