@@ -1,14 +1,18 @@
 {
   "name": "resume-generator",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Resume Generator App",
+  "author": "Nikesh Chavhan",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rimraf dist dist-electron release",
+    "build": "tsc -b && vite build",
+    "build:exe": "npm run clean && npm run build && electron-builder"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -33,16 +37,46 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^41.1.1",
+    "electron-builder": "^26.8.1",
     "esbuild": "^0.27.5",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "rimraf": "^6.1.3",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
     "vite": "^8.0.1",
     "vite-plugin-electron": "^0.29.1",
     "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "build": {
+    "appId": "com.resume.generator",
+    "productName": "ResumeGenerator",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist",
+      "dist-electron"
+    ],
+    "extraResources": [
+      {
+        "from": "../templates",
+        "to": "templates",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "public/resume-icon.ico",
+      "target": [
+        "portable"
+      ]
+    }
   }
 }

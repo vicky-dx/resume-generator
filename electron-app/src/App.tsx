@@ -1,6 +1,6 @@
 import Editor from "@monaco-editor/react";
 import debounce from "lodash/debounce";
-import { Code2, FileDown, FolderOpen, ListTree, Loader2, Play, Save, Settings2, X } from "lucide-react";
+import { Code2, FileDown, FolderOpen, ListTree, Loader2, Play, Save, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import FormEditor from "./components/FormEditor";
 import { useCompileStatus } from "./hooks/useCompileStatus";
@@ -161,7 +161,7 @@ function App() {
       const result = await window.electronAPI.generatePdf(data, currentTemplate, finalStyleConfig);
 
       if (result.success) {
-        const newUrl = `${result.pdfPath}?t=${Date.now()}#zoom=100`;
+        const newUrl = `${result.pdfPath}?t=${Date.now()}#zoom=100&navpanes=0&pagemode=none`;
         setPdfUrl(newUrl);
         setLastPdfUrl(newUrl);
         setStatus("done");
