@@ -1,35 +1,74 @@
 @import "tailwindcss";
 
-/* Custom Scrollbar for Dark Theme */
+@theme {
+  --color-black: #1c1c1e;
+  --color-white: #ffffff;
+  --color-blue-450: #5b76fe;
+  --color-actionable-pressed: #2a41b6;
+  --color-success-accent: #00b473;
+  --color-coral-light: #ffc6c6;
+  --color-coral-dark: #600000;
+  --color-rose-light: #ffd8f4;
+  --color-teal-light: #c3faf5;
+  --color-teal-dark: #187574;
+  --color-orange-light: #ffe6cd;
+  --color-yellow-dark: #746019;
+  --color-moss-dark: #187574;
+  --color-pink-soft: #fde0f0;
+  --color-red-light: #fbd4d4;
+  --color-red-muted: #e3c5c5;
+  --color-slate-miro: #555a6a;
+  --color-input-placeholder: #a5a8b5;
+  --color-border-miro: #c7cad5;
+
+  --font-sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "Roobert PRO", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-black);
+  background-color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display,
+button {
+  font-family: var(--font-display);
+}
+
+.ring-shadow-border {
+  box-shadow: rgb(224, 226, 232) 0px 0px 0px 1px;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #404040;
-    border-radius: 6px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
+  background: #c7cad5;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #52525b;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-}
-
-::-webkit-scrollbar-corner {
-    background: transparent;
+  background: #a5a8b5;
 }
 
 @supports (scrollbar-width: thin) {
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: #404040 transparent;
-    }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #c7cad5 transparent;
+  }
 }

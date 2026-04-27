@@ -151,7 +151,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
     };
 
     if (error) return (
-        <div className="flex items-center justify-center h-full text-red-500 bg-[#0A0A0B] p-8 text-center">{error}</div>
+        <div className="flex items-center justify-center h-full text-[#600000] bg-[#f8f9fa] p-8 text-center">{error}</div>
     );
 
     const sectionTitles: Record<string, string> = {
@@ -163,8 +163,17 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         awards: "Awards & Certificates"
     };
 
+    const sectionThemes: Record<string, { bg: string, text: string, border: string }> = {
+        summary: { bg: "bg-[#ffe6cd]", text: "text-[#746019]", border: "border-[#f5d5b5]" }, // Orange
+        experience: { bg: "bg-[#c3faf5]", text: "text-[#187574]", border: "border-[#a8ede7]" }, // Teal
+        education: { bg: "bg-[#ffd8f4]", text: "text-[#1c1c1e]", border: "border-[#f7cbe8]" }, // Rose
+        projects: { bg: "bg-[#fde0f0]", text: "text-[#1c1c1e]", border: "border-[#f5d3e5]" }, // Pink
+        skills: { bg: "bg-[#ffc6c6]", text: "text-[#600000]", border: "border-[#f7b7b7]" }, // Coral
+        awards: { bg: "bg-[#e3c5c5]", text: "text-[#600000]", border: "border-[#d9b8b8]" } // Muted Red
+    };
+
     return (
-        <div className="flex-1 overflow-y-auto p-6 bg-[#0A0A0B] text-neutral-300">
+        <div className="flex-1 overflow-y-auto p-8 bg-white text-[#1c1c1e]">
             {/* Personal Info Box (Always on Top) */}
             <PersonalInfo data={data} updateField={updateField} />
 
@@ -194,7 +203,12 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         if (!content) return null;
 
                         return (
-                            <SortableSectionItem key={sectionId} id={sectionId} title={sectionTitles[sectionId]}>
+                            <SortableSectionItem
+                                key={sectionId}
+                                id={sectionId}
+                                title={sectionTitles[sectionId]}
+                                theme={sectionThemes[sectionId]}
+                            >
                                 {content}
                             </SortableSectionItem>
                         );
@@ -203,8 +217,8 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
             </DndContext>
 
             {hiddenSections.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-neutral-800/50">
-                    <div className="mb-4 text-xs font-semibold text-neutral-500 uppercase tracking-widest">Available Sections</div>
+                <div className="mt-8 pt-6 border-t border-[#c7cad5]/50">
+                    <div className="mb-4 text-xs font-semibold text-[#a5a8b5] uppercase tracking-widest">Available Sections</div>
                     <div className="flex flex-wrap gap-2">
                         {hiddenSections.map(sectionId => (
                             <button
@@ -216,7 +230,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                                     newData.section_order = [...sectionOrder, sectionId];
                                     handleChangeWithSync(newData);
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-[#141415] text-neutral-400 hover:text-blue-400 border border-neutral-800 hover:border-blue-500/50 hover:bg-blue-500/5 rounded-lg text-sm transition-all font-medium"
+                                className="flex items-center gap-1.5 px-[16px] py-[8px] bg-white text-[#1c1c1e] hover:text-[#2a41b6] ring-shadow-border border border-transparent hover:border-[#5b76fe] rounded-[8px] text-sm transition-all font-medium"
                             >
                                 <Plus className="w-4 h-4" />
                                 {sectionTitles[sectionId]}

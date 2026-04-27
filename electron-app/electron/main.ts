@@ -18,8 +18,9 @@ let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
+        width: 1680,
+        height: 1000,
+        title: "Resume Generator",
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: false,

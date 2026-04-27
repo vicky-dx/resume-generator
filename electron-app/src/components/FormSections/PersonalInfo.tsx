@@ -1,3 +1,4 @@
+import { User } from "lucide-react";
 import { Field } from "./SharedComponents";
 
 interface PersonalInfoProps {
@@ -7,11 +8,14 @@ interface PersonalInfoProps {
 
 export function PersonalInfo({ data, updateField }: PersonalInfoProps) {
     return (
-        <div className="mb-6 bg-[#0E0E10] border border-neutral-800/80 rounded-2xl overflow-hidden shadow-sm">
-            <div className="w-full flex items-center p-4 bg-[#141415] border-b border-neutral-800">
-                <span className="font-semibold text-neutral-200 tracking-wide select-none">Personal Information</span>
+        <div className="mb-6 bg-white ring-shadow-border rounded-[20px] transition-shadow">
+            <div className="w-full flex items-center p-4 bg-[#c3faf5] border-b border-[#a8ede7] rounded-t-[20px]">
+                <div className="bg-white/50 p-1.5 rounded-[8px] text-[#187574] shadow-sm border border-white/40 mr-3">
+                    <User className="w-4 h-4" />
+                </div>
+                <span className="font-display text-[22px] text-[#187574] tracking-[-0.72px] select-none">Personal Information</span>
             </div>
-            <div className="p-6">
+            <div className="p-6 bg-white rounded-b-[20px]">
                 <div className="grid grid-cols-2 gap-4">
                     <Field label="Full Name" value={data.personal_info?.name || ""} onChange={(v) => updateField(["personal_info", "name"], v)} />
                     <Field label="Email" value={data.personal_info?.email || ""} onChange={(v) => updateField(["personal_info", "email"], v)} />
