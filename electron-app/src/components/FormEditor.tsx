@@ -151,7 +151,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
     };
 
     if (error) return (
-        <div className="flex items-center justify-center h-full text-[#600000] bg-[#f8f9fa] p-8 text-center">{error}</div>
+        <div className="flex items-center justify-center h-full text-[#600000] bg-[#fbd4d4] p-8 text-center">{error}</div>
     );
 
     const sectionTitles: Record<string, string> = {

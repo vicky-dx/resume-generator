@@ -10,7 +10,7 @@ export function PersonalInfo({ data, updateField }: PersonalInfoProps) {
     return (
         <div className="mb-6 bg-white ring-shadow-border rounded-[20px] transition-shadow">
             <div className="w-full flex items-center p-4 bg-[#c3faf5] border-b border-[#a8ede7] rounded-t-[20px]">
-                <div className="bg-white/50 p-1.5 rounded-[8px] text-[#187574] shadow-sm border border-white/40 mr-3">
+                <div className="bg-[#e2fdf9] p-1.5 rounded-[8px] text-[#187574] ring-[1px] ring-[rgb(224,226,232)] border border-[#c3faf5] mr-3">
                     <User className="w-4 h-4" />
                 </div>
                 <span className="font-display text-[22px] text-[#187574] tracking-[-0.72px] select-none">Personal Information</span>

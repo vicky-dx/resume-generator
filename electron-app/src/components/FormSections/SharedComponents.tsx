@@ -10,7 +10,7 @@ export function Field({ label, value, onChange, placeholder }: { label: string, 
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-white border border-[#e9eaef] text-[#1c1c1e] text-sm rounded-[8px] p-[16px] outline-none focus:border-[#5b76fe] focus:ring-1 focus:ring-[#5b76fe] transition-all font-medium placeholder:text-[#a5a8b5]"
+                className="w-full bg-white border border-[#c7cad5] text-[#1c1c1e] text-sm rounded-[8px] p-[16px] outline-none focus:border-[#5b76fe] focus:ring-1 focus:ring-[#5b76fe] transition-all font-medium placeholder:text-[#a5a8b5]"
             />
         </div>
     );
@@ -49,18 +49,18 @@ export function RichTextArea({ value, onChange, placeholder, rows = 4 }: { value
     };
 
     return (
-        <div className="border border-[#e9eaef] rounded-[8px] overflow-hidden bg-white focus-within:border-[#5b76fe] focus-within:ring-1 focus-within:ring-[#5b76fe] transition-colors ring-[0px]">
-            <div className="flex items-center gap-1 border-b border-[#e9eaef] bg-white p-2">
+        <div className="border border-[#c7cad5] rounded-[8px] overflow-hidden bg-white focus-within:border-[#5b76fe] focus-within:ring-1 focus-within:ring-[#5b76fe] transition-colors ring-[0px]">
+            <div className="flex items-center gap-1 border-b border-[#c7cad5] bg-white p-2">
                 <button
                     onClick={() => applyStyling("**", "**")}
-                    className="p-1.5 text-[#a5a8b5] hover:text-[#5b76fe] hover:bg-[#f4f5f7] rounded-[8px] transition-colors"
+                    className="p-1.5 text-[#a5a8b5] hover:text-[#5b76fe] hover:bg-[#c7cad5]/50 rounded-[8px] transition-colors"
                     title="Bold (**text**)"
                 >
                     <Bold className="w-[14px] h-[14px]" />
                 </button>
                 <button
                     onClick={() => applyStyling("*", "*")}
-                    className="p-1.5 text-[#a5a8b5] hover:text-[#5b76fe] hover:bg-[#f4f5f7] rounded-[8px] transition-colors"
+                    className="p-1.5 text-[#a5a8b5] hover:text-[#5b76fe] hover:bg-[#c7cad5]/50 rounded-[8px] transition-colors"
                     title="Italic (*text*)"
                 >
                     <Italic className="w-[14px] h-[14px]" />

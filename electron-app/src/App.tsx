@@ -83,7 +83,7 @@ function App() {
     if (showTweaks) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -211,21 +211,21 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#f4f5f7] text-[#1c1c1e] overflow-hidden">
+    <div className="flex h-screen w-full bg-white text-[#1c1c1e] overflow-hidden">
 
       {/* LEFT PANE - Editor */}
       <div className="w-1/2 flex flex-col border-r border-[#c7cad5] bg-[#ffffff] relative">
         <div className="h-10 bg-white border-b border-[#e9eaef] flex items-center px-4 justify-between select-none">
-          <div className="flex gap-1 bg-[#f4f5f7] ring-shadow-border p-1 rounded">
+          <div className="flex gap-1 bg-[#e9eaef] ring-shadow-border p-1 rounded">
             <button
               onClick={() => setViewMode("form")}
-              className={`flex items-center gap-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${viewMode === 'form' ? 'bg-white text-blue-450 shadow-sm border border-[#e9eaef]' : 'text-slate-miro hover:text-[#1c1c1e]'}`}
+              className={`flex items-center gap-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${viewMode === 'form' ? 'bg-white text-[#5b76fe] border border-[#c7cad5] ring-[1px] ring-[rgb(224,226,232)] px-2 py-1' : 'text-[#555a6a] hover:text-[#1c1c1e] px-2 py-1'}`}
             >
               <ListTree className="w-3.5 h-3.5" /> Form
             </button>
             <button
               onClick={() => setViewMode("json")}
-              className={`flex items-center gap-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${viewMode === 'json' ? 'bg-white text-blue-450 shadow-sm border border-[#e9eaef]' : 'text-slate-miro hover:text-[#1c1c1e]'}`}
+              className={`flex items-center gap-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${viewMode === 'json' ? 'bg-white text-[#5b76fe] border border-[#c7cad5] ring-[1px] ring-[rgb(224,226,232)] px-2 py-1' : 'text-[#555a6a] hover:text-[#1c1c1e] px-2 py-1'}`}
             >
               <Code2 className="w-3.5 h-3.5" /> JSON
             </button>
@@ -234,13 +234,13 @@ function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleOpenJson}
-              className="flex items-center gap-1.5 bg-transparent border border-[#c7cad5] hover:bg-[#f4f5f7] rounded-[8px] text-[11px] text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 bg-transparent border border-[#c7cad5] hover:bg-[#c7cad5]/50 rounded-[8px] text-[11px] text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
             >
               <FolderOpen className="w-3 h-3" /> OPEN
             </button>
             <button
               onClick={handleSaveJson}
-              className="flex items-center gap-1.5 bg-transparent border border-[#c7cad5] hover:bg-[#f4f5f7] rounded-[8px] text-[11px] text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 bg-transparent border border-[#c7cad5] hover:bg-[#c7cad5]/50 rounded-[8px] text-[11px] text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
             >
               <Save className="w-3 h-3" /> SAVE
             </button>
@@ -249,7 +249,7 @@ function App() {
             <button
               ref={tweaksBtnRef}
               onClick={() => setShowTweaks(!showTweaks)}
-              className="flex items-center gap-2 bg-[#f4f5f7] hover:bg-[#e9eaef] border border-[#c7cad5] rounded-[8px] text-[11px] font-semibold text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
+              className="flex items-center gap-2 border border-[#c7cad5] bg-[#e9eaef]/30 hover:bg-[#e9eaef] rounded-[8px] text-[11px] font-semibold text-[#1c1c1e] px-[12px] py-[7px] transition-colors cursor-pointer"
             >
               <Settings2 className="w-3 h-3" />
               TWEAKS
@@ -273,13 +273,13 @@ function App() {
 
             {/* ROW 1: General Styling */}
             <div className="flex flex-col gap-1.5">
-              <div className="text-[10px] uppercase font-bold text-slate-miro tracking-widest flex items-center gap-2">
+              <div className="text-[10px] uppercase font-bold text-[#555a6a] tracking-widest flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#fde0f0]"></span>
                 Style
               </div>
               <div className="flex flex-wrap items-center gap-5 bg-[#fde0f0]/30 ring-shadow-border p-4 rounded-[16px]">
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Template:
                   <select
                     value={templateName}
@@ -293,7 +293,7 @@ function App() {
 
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Font:
                   <select
                     name="font"
@@ -310,16 +310,16 @@ function App() {
                   </select>
                 </label>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Size:
                   <div className="flex items-center gap-2">
-                    <input type="range" min="8" max="16" step="0.5" name="font_size" value={styleConfig.font_size} onChange={handleStyleChange} className="w-24 accent-blue-450" />
-                    <span className="text-blue-450 w-6 font-mono text-[10px]">{styleConfig.font_size}</span>
+                    <input type="range" min="8" max="16" step="0.5" name="font_size" value={styleConfig.font_size} onChange={handleStyleChange} className="w-24 accent-[#5b76fe]" />
+                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.font_size}</span>
                   </div>
                 </label>
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Colour:
                   <input
                     type="color"
@@ -334,26 +334,26 @@ function App() {
 
             {/* ROW 2: Layout */}
             <div className="flex flex-col gap-1.5">
-              <div className="text-[10px] uppercase font-bold text-slate-miro tracking-widest flex items-center gap-2">
+              <div className="text-[10px] uppercase font-bold text-[#555a6a] tracking-widest flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5b76fe]"></span>
                 Layout
               </div>
               <div className="flex flex-wrap items-center gap-5 bg-[#c3faf5]/30 ring-shadow-border p-4 rounded-[16px]">
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-miro">Margins:</span>
-                  <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                  <span className="text-xs text-[#555a6a]">Margins:</span>
+                  <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                     TB:
                     <div className="flex items-center gap-2">
-                      <input type="range" min="0.1" max="1.5" step="0.1" name="margin_tb" value={styleConfig.margin_tb} onChange={handleStyleChange} className="w-20 accent-blue-450" />
-                      <span className="text-blue-450 w-4 font-mono text-[10px]">{styleConfig.margin_tb}</span>
+                      <input type="range" min="0.1" max="1.5" step="0.1" name="margin_tb" value={styleConfig.margin_tb} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
+                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.margin_tb}</span>
                     </div>
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                  <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                     LR:
                     <div className="flex items-center gap-2">
-                      <input type="range" min="0.1" max="1.5" step="0.1" name="margin_lr" value={styleConfig.margin_lr} onChange={handleStyleChange} className="w-20 accent-blue-450" />
-                      <span className="text-blue-450 w-4 font-mono text-[10px]">{styleConfig.margin_lr}</span>
+                      <input type="range" min="0.1" max="1.5" step="0.1" name="margin_lr" value={styleConfig.margin_lr} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
+                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.margin_lr}</span>
                     </div>
                   </label>
                 </div>
@@ -361,30 +361,30 @@ function App() {
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-miro">Gaps:</span>
-                  <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                  <span className="text-xs text-[#555a6a]">Gaps:</span>
+                  <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                     Section:
                     <div className="flex items-center gap-2">
-                      <input type="range" min="0" max="25" step="1" name="section_spacing" value={styleConfig.section_spacing} onChange={handleStyleChange} className="w-20 accent-blue-450" />
-                      <span className="text-blue-450 w-4 font-mono text-[10px]">{styleConfig.section_spacing}</span>
+                      <input type="range" min="0" max="25" step="1" name="section_spacing" value={styleConfig.section_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
+                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.section_spacing}</span>
                     </div>
                   </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                  <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                     Entry:
                     <div className="flex items-center gap-2">
-                      <input type="range" min="0" max="20" step="1" name="entry_spacing" value={styleConfig.entry_spacing} onChange={handleStyleChange} className="w-20 accent-blue-450" />
-                      <span className="text-blue-450 w-4 font-mono text-[10px]">{styleConfig.entry_spacing}</span>
+                      <input type="range" min="0" max="20" step="1" name="entry_spacing" value={styleConfig.entry_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
+                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.entry_spacing}</span>
                     </div>
                   </label>
                 </div>
 
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Line Spacing:
                   <div className="flex items-center gap-2">
-                    <input type="range" min="0" max="10" step="0.5" name="item_spacing" value={styleConfig.item_spacing} onChange={handleStyleChange} className="w-20 accent-blue-450" />
-                    <span className="text-blue-450 w-6 font-mono text-[10px]">{styleConfig.item_spacing}</span>
+                    <input type="range" min="0" max="10" step="0.5" name="item_spacing" value={styleConfig.item_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
+                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.item_spacing}</span>
                   </div>
                 </label>
 
@@ -393,13 +393,13 @@ function App() {
 
             {/* ROW 3: Details */}
             <div className="flex flex-col gap-1.5">
-              <div className="text-[10px] uppercase font-bold text-slate-miro tracking-widest flex items-center gap-2">
+              <div className="text-[10px] uppercase font-bold text-[#555a6a] tracking-widest flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ffe6cd]"></span>
                 Details
               </div>
               <div className="flex flex-wrap items-center gap-5 bg-[#ffe6cd]/30 ring-shadow-border p-4 rounded-[16px]">
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Bullet:
                   <select
                     name="bullet"
@@ -415,23 +415,23 @@ function App() {
                   </select>
                 </label>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
                   Indent:
                   <div className="flex items-center gap-2">
-                    <input type="range" min="0" max="5" step="0.1" name="bullet_indent" value={styleConfig.bullet_indent} onChange={handleStyleChange} className="w-16 accent-blue-450" />
-                    <span className="text-blue-450 w-6 font-mono text-[10px]">{styleConfig.bullet_indent}</span>
+                    <input type="range" min="0" max="5" step="0.1" name="bullet_indent" value={styleConfig.bullet_indent} onChange={handleStyleChange} className="w-16 accent-[#5b76fe]" />
+                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.bullet_indent}</span>
                   </div>
                 </label>
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium cursor-pointer hover:text-[#1c1c1e] transition-colors">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium cursor-pointer hover:text-[#1c1c1e] transition-colors">
                   <input type="checkbox" name="use_icons" checked={styleConfig.use_icons} onChange={handleStyleChange} className="w-4 h-4 rounded-[4px] bg-white ring-shadow-border border border-[#e9eaef] text-[#5b76fe] focus:ring-blue-450 focus:ring-1 cursor-pointer" />
                   Icons (fa5)
                 </label>
 
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-miro font-medium flex-1 min-w-[200px]">
+                <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium flex-1 min-w-[200px]">
                   Protect:
                   <input type="text" name="extra_protected_terms" placeholder="e.g. React, AWS" value={styleConfig.extra_protected_terms} onChange={handleStyleChange} className="bg-white border border-[#e9eaef] focus:border-blue-450 focus:ring-1 focus:ring-blue-450 outline-none rounded-[8px] px-[16px] py-[8px] text-[#1c1c1e] text-xs w-full placeholder:text-[#a5a8b5]" />
                 </label>
@@ -460,7 +460,7 @@ function App() {
             />
           </div>
         ) : (
-          <div className="flex-1 min-h-0 flex flex-col bg-[#f4f5f7]">
+          <div className="flex-1 min-h-0 flex flex-col bg-white">
             {/* Form Editor Wrapper */}
             <FormEditor jsonText={jsonText} onChange={(newJson) => setJsonText(newJson)} />
           </div>
@@ -480,11 +480,11 @@ function App() {
       {/* RIGHT PANE - PDF Preview */}
       <div className="w-1/2 flex flex-col bg-[#c7cad5] relative">
         <div className="h-10 bg-white border-b border-[#e9eaef] flex items-center px-4 justify-between select-none">
-          <div className="text-xs font-semibold text-slate-miro tracking-wider">PDF PREVIEW</div>
+          <div className="text-xs font-semibold text-[#555a6a] tracking-wider">PDF PREVIEW</div>
           <button
             onClick={() => pdfUrl && window.electronAPI.savePdf(pdfUrl)}
             disabled={!pdfUrl}
-            className={`flex items-center gap-1.5 transition-colors ${pdfUrl ? 'text-slate-miro hover:text-[#1c1c1e] cursor-pointer' : 'text-[#a5a8b5] cursor-not-allowed'}`}
+            className={`flex items-center gap-1.5 transition-colors ${pdfUrl ? 'text-[#555a6a] hover:text-[#1c1c1e] cursor-pointer' : 'text-[#a5a8b5] cursor-not-allowed'}`}
             title="Download PDF"
           >
             <FileDown className="w-3 h-3" />
@@ -492,7 +492,7 @@ function App() {
           </button>
         </div>
 
-        <div className="flex-1 bg-[#e9eaef] flex justify-center w-full h-full relative shadow-inner">
+        <div className="flex-1 bg-[#e9eaef] flex justify-center w-full h-full relative ">
           {pdfUrl || lastPdfUrl ? (
             <iframe
               src={pdfUrl || lastPdfUrl || undefined}
@@ -500,10 +500,10 @@ function App() {
               title="PDF Preview"
             />
           ) : (
-            <div className="m-auto flex flex-col items-center justify-center text-slate-miro gap-3 opacity-50 relative z-0">
+            <div className="m-auto flex flex-col items-center justify-center text-[#555a6a] gap-3 opacity-50 relative z-0">
               <FileDown className="w-12 h-12" />
               <div className="text-sm">No PDF Generated</div>
-              <div className="text-xs text-slate-miro">Edit form or JSON to generate</div>
+              <div className="text-xs text-[#555a6a]">Edit form or JSON to generate</div>
             </div>
           )}
 
@@ -511,7 +511,7 @@ function App() {
             <div className="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm z-10 transition-all duration-300">
               <div className="bg-white border border-[#e9eaef] px-6 py-4 rounded-xl shadow-2xl flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-[#5b76fe]" />
-                <span className="text-sm font-bold tracking-widest text-slate-miro uppercase animate-pulse">
+                <span className="text-sm font-bold tracking-widest text-[#555a6a] uppercase animate-pulse">
                   Compiling PDF...
                 </span>
               </div>

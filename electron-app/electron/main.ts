@@ -1,9 +1,8 @@
-import { exec } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import util from "util";
 
 import { buildLatex, defaultStyleConfig } from "../src/lib/builder";
 import { defaultEscaper } from "../src/lib/escaper";
@@ -11,7 +10,64 @@ import { defaultEscaper } from "../src/lib/escaper";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const execAsync = util.promisify(exec);
+// We intentionally avoid shell-based `exec` for compilation to prevent
+// command injection and to have finer control over stderr/stdout streams.
+
+async function commandExists(cmd: string) {
+    try {
+        // Prefer a binary probe without shell parsing. Try common flags for version output.
+        let res = spawnSync(cmd, ['--version'], { stdio: 'ignore' });
+        if (res && typeof res.status === 'number' && res.status === 0) return true;
+        res = spawnSync(cmd, ['-v'], { stdio: 'ignore' });
+        if (res && typeof res.status === 'number' && res.status === 0) return true;
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
+
+function runLatexmk(buildDir: string, texFilePath: string, signal?: AbortSignal, opts?: { haltOnError?: boolean }) {
+    const args = [
+        // Use xelatex as engine explicitly
+        ...(opts?.haltOnError ? ["-halt-on-error"] : []),
+        "-xelatex",
+        "-interaction=nonstopmode",
+        `-output-directory=${buildDir}`,
+        texFilePath,
+    ];
+
+    return new Promise<void>((resolve, reject) => {
+        const proc = spawn("latexmk", args, { stdio: ['ignore', 'pipe', 'pipe'] as any });
+        let timedOut = false;
+
+        // Kill after timeout to avoid hangs
+        const timeoutMs = 30000; // 30s default
+        const killTimer = setTimeout(() => {
+            timedOut = true;
+            try { proc.kill(); } catch (e) { }
+        }, timeoutMs);
+
+        if (signal) {
+            signal.addEventListener('abort', () => {
+                try { proc.kill(); } catch (e) { }
+            });
+        }
+
+        let stderr = '';
+        proc.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+        proc.on('error', (err: any) => {
+            clearTimeout(killTimer);
+            reject(err);
+        });
+        proc.on('close', (code) => {
+            clearTimeout(killTimer);
+            if (timedOut) return reject(new Error('latexmk timed out'));
+            if (code === 0) return resolve();
+            // Non-zero exit -> treat as error and include stderr to aid debugging
+            return reject(new Error(stderr || `latexmk exited with code ${code}`));
+        });
+    });
+}
 let currentAbortController: AbortController | null = null;
 
 let mainWindow: BrowserWindow | null = null;
@@ -25,8 +81,9 @@ function createWindow() {
             preload: path.join(__dirname, "preload.js"),
             nodeIntegration: false,
             contextIsolation: true,
-            sandbox: false, // Fixes Vite preload bundle iterable error
-            webSecurity: false, // Useful for loading local PDF files in the viewer
+            // Enable sandbox and webSecurity in production. Allow relaxed settings in dev only.
+            sandbox: !!process.env.VITE_DEV_SERVER_URL ? false : true,
+            webSecurity: !!process.env.VITE_DEV_SERVER_URL ? false : true,
         },
     });
 
@@ -73,7 +130,7 @@ ipcMain.handle("open-json", async () => {
     });
     if (canceled || filePaths.length === 0) return { success: false, canceled: true };
     try {
-        const rawData = fs.readFileSync(filePaths[0], "utf-8");
+        const rawData = await fs.promises.readFile(filePaths[0], "utf-8");
         return { success: true, data: rawData, filePath: filePaths[0] };
     } catch (error: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ) {
@@ -90,7 +147,7 @@ ipcMain.handle("save-json", async (event, content: string, defaultPath?: string)
     });
     if (canceled || !filePath) return { success: false, canceled: true };
     try {
-        fs.writeFileSync(filePath, content, "utf-8");
+        await fs.promises.writeFile(filePath, content, "utf-8");
         return { success: true, filePath };
     } catch (error: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ) {
@@ -119,60 +176,73 @@ ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string
         fs.readdir(buildDir, (err, files) => {
             if (!err) {
                 files.forEach(f => {
+                    // Safety: do not remove files that belong to the current jobId
+                    if (typeof jobId === 'string' && f.includes(jobId)) return;
                     const fp = path.join(buildDir, f);
                     fs.stat(fp, (e, stats) => {
                         // Delete files older than 1 hour to prevent breaking iframe and saving space
                         if (!e && stats.mtimeMs < Date.now() - 3600000) {
-                            fs.unlink(fp, () => {});
+                            fs.unlink(fp, () => { });
                         }
                     });
                 });
             }
         });
 
-        // Optional: We can mock templates location here for now
-        // Expecting templates to be in `../templates` relative to app root
-        // For dev we point to the original repository's templates
-        const templatesDir = path.join(app.getAppPath(), "../templates");
+        // Templates directory: prefer packaged resources, fallback to dev path
+        const packagedTemplates = path.join(process.resourcesPath || '', "templates");
+        const devTemplates = path.join(app.getAppPath(), "../templates");
+        const templatesDir = fs.existsSync(packagedTemplates) ? packagedTemplates : devTemplates;
 
         const finalStyle = { ...defaultStyleConfig, ...(styleConfig || {}) };
 
-        // Debug log
+        // Lightweight debug info (avoid heavy stringify)
         try {
-            console.log("PDF GEN DATA SKILLS:", JSON.stringify((data as any).skills, null, 2));
-            console.log("PDF GEN DATA PROJECTS:", JSON.stringify((data as any).projects, null, 2));
+            console.log("PDF GEN: skills count:", Array.isArray((data as any).skills) ? (data as any).skills.length : 0);
+            console.log("PDF GEN: projects count:", Array.isArray((data as any).projects) ? (data as any).projects.length : 0);
         } catch (e) { }
 
         // 2. Generate LaTeX Content using our Nunjucks Builder
         const latexContent = buildLatex(data, templatesDir, templateName, finalStyle, defaultEscaper);
 
-        // 3. Write LaTeX to file
+        // 3. Write LaTeX to file (async to avoid blocking main thread)
         const texFilePath = path.join(buildDir, `output-${jobId}.tex`);
         const pdfPath = path.join(buildDir, `output-${jobId}.pdf`);
 
-        fs.writeFileSync(texFilePath, latexContent, "utf-8");
+        await fs.promises.writeFile(texFilePath, latexContent, "utf-8");
 
-        // 4. Compile with latexmk (handles multiple passes automatically)
-        const compileCmd = `latexmk -f -xelatex -interaction=nonstopmode -output-directory="${buildDir}" "${texFilePath}"`;
+        // 4. Pre-flight: ensure latexmk is available
+        if (!(await commandExists('latexmk'))) {
+            return { success: false, error: 'latexmk not found. Please install a LaTeX distribution (TeX Live or MiKTeX) that provides latexmk/xelatex.' };
+        }
 
+        // 5. Run latexmk using spawn (no shell parsing) to avoid injection
         console.log(`Running latexmk compilation... (Job: ${jobId})`);
         try {
-            await execAsync(compileCmd, { signal });
+            // Use halt-on-error in dev to fail fast, but avoid -f to prevent masking fatal errors
+            const haltOnError = !!process.env.VITE_DEV_SERVER_URL;
+            await runLatexmk(buildDir, texFilePath, signal, { haltOnError });
         } catch (execErr: any) {
+            if (execErr?.code === 'ENOENT') {
+                return { success: false, error: 'latexmk executable not found. Please install LaTeX.' };
+            }
             if (execErr.name === 'AbortError') {
                 console.log(`Job ${jobId} was cancelled.`);
                 return { success: false, error: "Compilation Cancelled", canceled: true };
             }
-            // latexmk (and xelatex) will often exit with a non-zero code even on 
-            // non-fatal warnings (like 'Overfull \hbox'). We should ignore the 
-            // process error if the PDF was successfully generated anyway.
-            console.warn("latexmk produced warnings/errors, checking if PDF was generated...", execErr.message?.substring(0, 200));
+            console.warn("latexmk execution error (continuing to PDF existence check):", execErr?.message?.substring?.(0, 200) || execErr);
         }
 
-        // 5. Return the path to the generated PDF
-        if (!fs.existsSync(pdfPath)) {
-            throw new Error("PDF file was not found after compilation.");
+        // 6. Verify produced PDF exists and is non-empty
+        const stats = fs.existsSync(pdfPath) ? fs.statSync(pdfPath) : null;
+        if (!stats || stats.size === 0) {
+            throw new Error("PDF file was not found or is empty after compilation.");
         }
+
+        // 7. Clean up auxiliary files produced by latexmk to keep temp dir tidy
+        try {
+            spawn('latexmk', ['-c', `-output-directory=${buildDir}`], { stdio: 'ignore' });
+        } catch (e) { /* non-fatal cleanup error */ }
 
         return { success: true, pdfPath: `file://${pdfPath}`.replace(/\\/g, "/") };
 
@@ -199,7 +269,7 @@ ipcMain.handle("save-pdf", async (event, pdfUrl: string) => {
     if (canceled || !filePath) return { success: false, canceled: true };
 
     try {
-        fs.copyFileSync(sourcePath, filePath);
+        await fs.promises.copyFile(sourcePath, filePath);
         return { success: true, filePath };
     } catch (error: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ) {

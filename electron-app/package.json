@@ -1,7 +1,7 @@
 {
   "name": "resume-generator",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Resume Generator App",
   "author": "Nikesh Chavhan",

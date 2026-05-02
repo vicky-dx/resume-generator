@@ -22,21 +22,21 @@ export function SortableSectionItem({ id, title, children, theme }: { id: string
     };
 
     // Default to a soft gray if no theme provided
-    const safeTheme = theme || { bg: 'bg-[#f4f5f7]', text: 'text-[#1c1c1e]', border: 'border-[#e9eaef]' };
+    const safeTheme = theme || { bg: 'bg-white', text: 'text-[#1c1c1e]', border: 'border-[#c7cad5]' };
 
     return (
-        <div ref={setNodeRef} {...{ style }} className={`mb-6 bg-white ring-shadow-border rounded-[20px] transition-shadow ${isDragging ? 'shadow-2xl cursor-grabbing' : ''}`}>
+        <div ref={setNodeRef} {...{ style }} className={`mb-6 bg-white ring-shadow-border rounded-[20px] transition-shadow ${isDragging ? 'ring-[2px] ring-[rgb(224,226,232)] cursor-grabbing' : ''}`}>
             <div className={`w-full flex items-center justify-between p-4 ${safeTheme.bg} transition-colors border-b ${open ? safeTheme.border : 'border-transparent'} rounded-t-[20px] ${!open ? 'rounded-b-[20px]' : ''}`}>
                 <div className="flex items-center gap-3 w-full">
                     {/* DRAG HANDLE */}
-                    <div {...attributes} {...listeners} className={`bg-white/50 hover:bg-white p-1.5 rounded-[8px] ${safeTheme.text} shadow-sm border border-white/40 cursor-grab active:cursor-grabbing transition-colors touch-none`}>
+                    <div {...attributes} {...listeners} className={`bg-white hover:bg-white p-1.5 rounded-[8px] ${safeTheme.text} ring-[1px] ring-[rgb(224,226,232)] border border-[#c7cad5] cursor-grab active:cursor-grabbing transition-colors touch-none`}>
                         <GripVertical className="w-4 h-4" />
                     </div>
                     <button onClick={() => setOpen(!open)} className={`outline-none text-left flex-1 font-display text-[22px] ${safeTheme.text} tracking-[-0.72px] select-none`}>
                         {title}
                     </button>
                 </div>
-                <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white/40 transition-colors ${safeTheme.text}`}>
+                <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white transition-colors ${safeTheme.text}`}>
                     {open ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                 </button>
             </div>

@@ -13,7 +13,7 @@ export function Education({ data, updateField, moveItem, deleteItem, addItem }: 
     return (
         <>
             {Array.isArray(data.education) && data.education.map((edu: any, i: number) => (
-                <div key={i} className="mb-5 p-5 border border-[#c7cad5] bg-[#f4f5f7] rounded-xl relative group transition-all hover:border-[#e9eaef]">
+                <div key={i} className="mb-5 p-5 border border-[#c7cad5] bg-white rounded-[12px] relative group transition-all">
                     <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <button title="Move Up" onClick={() => moveItem(["education"], i, 'up')} disabled={i === 0} className="hover:text-[#5b76fe] disabled:opacity-20 p-1"><ArrowUp className="w-4 h-4" /></button>
                         <button title="Move Down" onClick={() => moveItem(["education"], i, 'down')} disabled={i === (data.education?.length || 1) - 1} className="hover:text-[#5b76fe] disabled:opacity-20 p-1"><ArrowDown className="w-4 h-4" /></button>
@@ -27,7 +27,7 @@ export function Education({ data, updateField, moveItem, deleteItem, addItem }: 
                     </div>
                 </div>
             ))}
-            <button onClick={() => addItem(["education"], { degree: "", institution: "", duration: "", gpa: "" })} className="group flex items-center justify-center gap-2 w-full py-3.5 border border-dashed border-[#c7cad5] text-[#1c1c1e] hover:text-[#5b76fe] hover:border-[#5b76fe] hover:bg-[#f4f5f7] rounded-[12px] transition-all font-medium"><Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Add Education</button>
+            <button onClick={() => addItem(["education"], { degree: "", institution: "", duration: "", gpa: "" })} className="group flex items-center justify-center gap-2 w-full py-3.5 border border-dashed border-[#c7cad5] text-[#1c1c1e] hover:text-[#5b76fe] hover:border-[#5b76fe] bg-transparent hover:bg-white rounded-[12px] transition-all font-medium"><Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Add Education</button>
         </>
     );
 }
