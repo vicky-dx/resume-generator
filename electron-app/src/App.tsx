@@ -89,8 +89,12 @@ function App() {
     };
   }, [showTweaks]);
 
-  const [templateName, setTemplateName] = useState("classic.tex");
-  const [styleConfig, setStyleConfig] = useState({
+  const [templateName, setTemplateName] = useState(() => {
+    const saved = localStorage.getItem("resume_template_name");
+    return saved || "classic.tex";
+  });
+
+  const defaultStyleConfig = {
     font: "Calibri",
     font_size: 11,
     margin_tb: 0.5,
@@ -103,7 +107,27 @@ function App() {
     section_color: [96, 36, 191],
     extra_protected_terms: "",
     use_icons: true,
+  };
+
+  const [styleConfig, setStyleConfig] = useState<typeof defaultStyleConfig>(() => {
+    const saved = localStorage.getItem("resume_style_config");
+    if (saved) {
+      try {
+        return { ...defaultStyleConfig, ...JSON.parse(saved) };
+      } catch (e) {
+        // Ignore parse errors and fallback
+      }
+    }
+    return defaultStyleConfig;
   });
+
+  useEffect(() => {
+    localStorage.setItem("resume_template_name", templateName);
+  }, [templateName]);
+
+  useEffect(() => {
+    localStorage.setItem("resume_style_config", JSON.stringify(styleConfig));
+  }, [styleConfig]);
 
   const handleStyleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | { target: { name: string, value: unknown, type: string } }) => {
     const target = e.target;
