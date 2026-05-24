@@ -128,6 +128,15 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         }
     };
 
+    const deleteSection = (sectionId: string) => {
+        const newData = { ...data };
+        delete newData[sectionId];
+        if (Array.isArray(newData.section_order)) {
+            newData.section_order = newData.section_order.filter((s: string) => s !== sectionId);
+        }
+        handleChangeWithSync(newData);
+    };
+
     const defaultOrder = ["summary", "skills", "experience", "projects", "education", "awards"];
     const sectionOrder = (Array.isArray(data.section_order) && data.section_order.length > 0)
         ? data.section_order
@@ -208,6 +217,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                                 id={sectionId}
                                 title={sectionTitles[sectionId]}
                                 theme={sectionThemes[sectionId]}
+                                onDelete={() => deleteSection(sectionId)}
                             >
                                 {content}
                             </SortableSectionItem>

@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 
 interface ThemeProps {
@@ -9,7 +9,7 @@ interface ThemeProps {
     border: string;
 }
 
-export function SortableSectionItem({ id, title, children, theme }: { id: string, title: string, children: React.ReactNode, theme?: ThemeProps }) {
+export function SortableSectionItem({ id, title, children, theme, onDelete }: { id: string, title: string, children: React.ReactNode, theme?: ThemeProps, onDelete?: () => void }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
     const [open, setOpen] = useState(false);
 
@@ -36,9 +36,23 @@ export function SortableSectionItem({ id, title, children, theme }: { id: string
                         {title}
                     </button>
                 </div>
-                <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white transition-colors ${safeTheme.text}`}>
-                    {open ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </button>
+                <div className="flex items-center gap-1">
+                    {onDelete && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            className="p-1.5 rounded-full hover:bg-white transition-colors text-red-500 hover:text-red-700 cursor-pointer"
+                            title={`Delete ${title} section`}
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
+                    <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white transition-colors ${safeTheme.text}`}>
+                        {open ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                    </button>
+                </div>
             </div>
             {open && (
                 <div className="p-6 cursor-default border-t border-[#e9eaef]/50 bg-white rounded-b-[20px]">

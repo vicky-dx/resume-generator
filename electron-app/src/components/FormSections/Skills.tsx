@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Field } from "./SharedComponents";
 
 interface Props {
@@ -7,6 +8,41 @@ interface Props {
     moveItem: any;
     deleteItem: any;
     addItem: any;
+}
+
+interface SkillItemInputProps {
+    items: string[];
+    onChange: (items: string[]) => void;
+}
+
+function SkillItemInput({ items, onChange }: SkillItemInputProps) {
+    const [inputValue, setInputValue] = useState("");
+
+    // Keep the input value in sync with external state changes, but only if they differ semantically
+    useEffect(() => {
+        const itemsArray = Array.isArray(items) ? items : [];
+        const joined = itemsArray.join(", ");
+        const currentParsed = inputValue.split(",").map(x => x.trim()).filter(Boolean);
+        const externalParsed = itemsArray.map(x => (typeof x === 'string' ? (x as string).trim() : "")).filter(Boolean);
+        if (JSON.stringify(currentParsed) !== JSON.stringify(externalParsed)) {
+            setInputValue(joined);
+        }
+    }, [items]);
+
+    const handleChange = (val: string) => {
+        setInputValue(val);
+        const parsed = val.split(",").map(x => x.trim()).filter(Boolean);
+        onChange(parsed);
+    };
+
+    return (
+        <Field
+            label="Items (Comma separated)"
+            value={inputValue}
+            onChange={handleChange}
+            placeholder="Python, JavaScript, C++"
+        />
+    );
 }
 
 export function Skills({ data, updateField, moveItem, deleteItem, addItem }: Props) {
@@ -24,7 +60,7 @@ export function Skills({ data, updateField, moveItem, deleteItem, addItem }: Pro
                         <Field label="Category" value={skill.category || ""} onChange={(v) => updateField(["skills", i, "category"], v)} placeholder="e.g. Languages" />
                     </div>
                     <div className="pr-24 cursor-text">
-                        <Field label="Items (Comma separated)" value={[].concat(skill.items || []).join(", ")} onChange={(v) => updateField(["skills", i, "items"], v.split(",").map((x: string) => x.trim()).filter((x: string) => x))} placeholder="Python, JavaScript, C++" />
+                        <SkillItemInput items={skill.items} onChange={(newItems) => updateField(["skills", i, "items"], newItems)} />
                     </div>
                 </div>
             ))}
