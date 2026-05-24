@@ -50,11 +50,15 @@ function runLatexmk(buildDir: string, texFilePath: string, signal?: AbortSignal,
         if (signal) {
             signal.addEventListener('abort', () => {
                 try { proc.kill(); } catch (e) { }
+                const abortErr = new Error("Compilation Cancelled");
+                abortErr.name = "AbortError";
+                reject(abortErr);
             });
         }
 
-        let stderr = '';
-        proc.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+        let output = '';
+        proc.stdout.on('data', (chunk) => { output += chunk.toString(); });
+        proc.stderr.on('data', (chunk) => { output += chunk.toString(); });
         proc.on('error', (err: any) => {
             clearTimeout(killTimer);
             reject(err);
@@ -63,8 +67,8 @@ function runLatexmk(buildDir: string, texFilePath: string, signal?: AbortSignal,
             clearTimeout(killTimer);
             if (timedOut) return reject(new Error('latexmk timed out'));
             if (code === 0) return resolve();
-            // Non-zero exit -> treat as error and include stderr to aid debugging
-            return reject(new Error(stderr || `latexmk exited with code ${code}`));
+            // Non-zero exit -> treat as error and include output to aid debugging
+            return reject(new Error(output || `latexmk exited with code ${code}`));
         });
     });
 }
@@ -92,7 +96,13 @@ function createWindow() {
 
     // Load Vite dev server URL or the local file when packaged
     if (process.env.VITE_DEV_SERVER_URL) {
-        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+        const loadDevServer = () => {
+            mainWindow?.loadURL(process.env.VITE_DEV_SERVER_URL as string).catch((err) => {
+                console.log('Vite server not ready yet, retrying in 500ms...');
+                setTimeout(loadDevServer, 500);
+            });
+        };
+        loadDevServer();
         // mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
@@ -218,6 +228,7 @@ ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string
 
         // 5. Run latexmk using spawn (no shell parsing) to avoid injection
         console.log(`Running latexmk compilation... (Job: ${jobId})`);
+        let latexErrorOutput = "";
         try {
             // Use halt-on-error in dev to fail fast, but avoid -f to prevent masking fatal errors
             const haltOnError = !!process.env.VITE_DEV_SERVER_URL;
@@ -226,22 +237,30 @@ ipcMain.handle("generate-pdf", async (event, data: unknown, templateName: string
             if (execErr?.code === 'ENOENT') {
                 return { success: false, error: 'latexmk executable not found. Please install LaTeX.' };
             }
+            if (execErr?.message === 'latexmk timed out') {
+                return { success: false, error: 'Compilation timed out. Your latex code might have caused an infinite loop or took too long to compile.' };
+            }
             if (execErr.name === 'AbortError') {
                 console.log(`Job ${jobId} was cancelled.`);
                 return { success: false, error: "Compilation Cancelled", canceled: true };
             }
             console.warn("latexmk execution error (continuing to PDF existence check):", execErr?.message?.substring?.(0, 200) || execErr);
+            latexErrorOutput = execErr?.message || String(execErr);
         }
 
         // 6. Verify produced PDF exists and is non-empty
         const stats = fs.existsSync(pdfPath) ? fs.statSync(pdfPath) : null;
         if (!stats || stats.size === 0) {
-            throw new Error("PDF file was not found or is empty after compilation.");
+            if (latexErrorOutput) {
+                throw new Error("PDF file was not found or is empty after compilation.\n\nLaTeX Error Details:\n" + latexErrorOutput);
+            } else {
+                throw new Error("PDF file was not found or is empty after compilation.");
+            }
         }
 
         // 7. Clean up auxiliary files produced by latexmk to keep temp dir tidy
         try {
-            spawn('latexmk', ['-c', `-output-directory=${buildDir}`], { stdio: 'ignore' });
+            spawn('latexmk', ['-c', `-output-directory=${buildDir}`, texFilePath], { stdio: 'ignore' });
         } catch (e) { /* non-fatal cleanup error */ }
 
         return { success: true, pdfPath: `file://${pdfPath}`.replace(/\\/g, "/") };
