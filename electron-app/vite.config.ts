@@ -24,6 +24,18 @@ export default defineConfig({
         onstart(options) {
           options.reload();
         },
+        vite: {
+          build: {
+            lib: {
+              entry: "electron/preload.ts",
+              formats: ["cjs"],
+              fileName: () => "preload.cjs"
+            },
+            rollupOptions: {
+              external: ["electron"]
+            }
+          }
+        }
       },
     ]),
     // renderer(),

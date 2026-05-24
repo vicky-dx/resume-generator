@@ -78,7 +78,7 @@ function createWindow() {
         height: 1000,
         title: "Resume Generator",
         webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
+            preload: path.join(__dirname, "preload.cjs"),
             nodeIntegration: false,
             contextIsolation: true,
             // Enable sandbox and webSecurity in production. Allow relaxed settings in dev only.

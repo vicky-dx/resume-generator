@@ -120,6 +120,14 @@ function App() {
     }));
   };
 
+  const getElectronAPI = () => {
+    if (!window.electronAPI) {
+      throw new Error("Electron API is unavailable. Launch the app through the Electron desktop app or the Electron dev script.");
+    }
+
+    return window.electronAPI;
+  };
+
   const compileResume = async (currentJsonText: string, currentTemplate: string, currentStyleConfig: any) => {
     setStatus("compiling");
     setErrorMsg(null);
@@ -158,7 +166,8 @@ function App() {
       };
 
       // 2. Send via IPC to Electron Main Process
-      const result = await window.electronAPI.generatePdf(data, currentTemplate, finalStyleConfig);
+      const electronAPI = getElectronAPI();
+      const result = await electronAPI.generatePdf(data, currentTemplate, finalStyleConfig);
 
       if (result.success) {
         const newUrl = `${result.pdfPath}?t=${Date.now()}#zoom=100&navpanes=0&pagemode=none`;
@@ -200,14 +209,16 @@ function App() {
 
 
   const handleOpenJson = async () => {
-    const result = await window.electronAPI.openJson();
+    const electronAPI = getElectronAPI();
+    const result = await electronAPI.openJson();
     if (result.success && result.data) {
       setJsonText(result.data);
     }
   };
 
   const handleSaveJson = async () => {
-    await window.electronAPI.saveJson(jsonText);
+    const electronAPI = getElectronAPI();
+    await electronAPI.saveJson(jsonText);
   };
 
   return (
@@ -482,7 +493,12 @@ function App() {
         <div className="h-10 bg-white border-b border-[#e9eaef] flex items-center px-4 justify-between select-none">
           <div className="text-xs font-semibold text-[#555a6a] tracking-wider">PDF PREVIEW</div>
           <button
-            onClick={() => pdfUrl && window.electronAPI.savePdf(pdfUrl)}
+            onClick={() => {
+              if (pdfUrl) {
+                const electronAPI = getElectronAPI();
+                electronAPI.savePdf(pdfUrl);
+              }
+            }}
             disabled={!pdfUrl}
             className={`flex items-center gap-1.5 transition-colors ${pdfUrl ? 'text-[#555a6a] hover:text-[#1c1c1e] cursor-pointer' : 'text-[#a5a8b5] cursor-not-allowed'}`}
             title="Download PDF"

@@ -7,7 +7,7 @@
   "author": "Nikesh Chavhan",
   "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"vite --strictPort --port 5173\" \"cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "clean": "rimraf dist dist-electron release",
@@ -75,7 +75,7 @@
     "win": {
       "icon": "public/resume-icon.ico",
       "target": [
-        "portable"
+        "nsis"
       ]
     }
   }
