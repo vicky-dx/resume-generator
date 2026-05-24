@@ -112,7 +112,7 @@ function App() {
 
     let value: string | boolean | number = target.value as string | boolean | number;
     if (type === "checkbox") value = (target as HTMLInputElement).checked;
-    if (type === "number") value = parseFloat(value as string);
+    if (type === "number" || type === "range") value = parseFloat(value as string);
 
     setStyleConfig((prev) => ({
       ...prev,
