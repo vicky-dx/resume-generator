@@ -96,13 +96,7 @@ function createWindow() {
 
     // Load Vite dev server URL or the local file when packaged
     if (process.env.VITE_DEV_SERVER_URL) {
-        const loadDevServer = () => {
-            mainWindow?.loadURL(process.env.VITE_DEV_SERVER_URL as string).catch((err) => {
-                console.log('Vite server not ready yet, retrying in 500ms...');
-                setTimeout(loadDevServer, 500);
-            });
-        };
-        loadDevServer();
+        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
         // mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
