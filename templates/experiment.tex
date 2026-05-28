@@ -41,7 +41,7 @@
 % KOMA-native section formatting (coloured heading + horizontal rule)
 \setkomafont{section}{\large\bfseries\color{sectionblue}}
 \renewcommand*{\sectionformat}{}
-\RedeclareSectionCommand[beforeskip=<< section_spacing >>pt, afterskip=4pt, afterindent=false]{section}
+\RedeclareSectionCommand[beforeskip=<< section_spacing >>pt, afterskip=<< heading_content_gap >>pt, afterindent=false]{section}
 \makeatletter
 \renewcommand*{\sectionlinesformat}[4]{%
   \@hangfrom{\hskip #2#3}{#4}\par\nobreak
@@ -136,6 +136,16 @@
 \end{itemize}
 <% endif %>
 
+
+<% if languages %>
+\section*{LANGUAGES AND PROFICIENCY}
+\begin{itemize}[leftmargin=<< bullet_indent + 1.2 >>em, label=\textcolor{sectionblue}{<< bullet >>}, itemsep=<< item_spacing >>pt, parsep=0pt, topsep=4pt, partopsep=0pt]
+\raggedright
+<% for lang in languages %>
+    \item \textbf{<< lang.name >>:} << lang.level >>
+<% endfor %>
+\end{itemize}
+<% endif %>
 
 <% if awards %>
 \section*{AWARDS AND CERTIFICATES}

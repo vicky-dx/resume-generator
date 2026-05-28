@@ -28,6 +28,7 @@ import { Projects } from "./FormSections/Projects";
 import { Skills } from "./FormSections/Skills";
 import { SortableSectionItem } from "./FormSections/SortableSectionItem";
 import { Summary } from "./FormSections/Summary";
+import { Languages } from "./FormSections/Languages";
 
 interface FormProps {
     jsonText: string;
@@ -137,7 +138,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         handleChangeWithSync(newData);
     };
 
-    const defaultOrder = ["summary", "skills", "experience", "projects", "education", "awards"];
+    const defaultOrder = ["summary", "skills", "experience", "projects", "education", "languages", "awards"];
     const sectionOrder = (Array.isArray(data.section_order) && data.section_order.length > 0)
         ? data.section_order
         : defaultOrder.filter(s => data[s] !== undefined);
@@ -169,6 +170,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         education: "Education",
         projects: "Projects",
         skills: "Skills",
+        languages: "Languages & Proficiency",
         awards: "Awards & Certificates"
     };
 
@@ -178,6 +180,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
         education: { bg: "bg-[#ffd8f4]", text: "text-[#1c1c1e]", border: "border-[#f7cbe8]" }, // Rose
         projects: { bg: "bg-[#fde0f0]", text: "text-[#1c1c1e]", border: "border-[#f5d3e5]" }, // Pink
         skills: { bg: "bg-[#ffc6c6]", text: "text-[#600000]", border: "border-[#f7b7b7]" }, // Coral
+        languages: { bg: "bg-[#eadeff]", text: "text-[#4a154b]", border: "border-[#d8beff]" }, // Lavender
         awards: { bg: "bg-[#e3c5c5]", text: "text-[#600000]", border: "border-[#d9b8b8]" } // Muted Red
     };
 
@@ -204,6 +207,9 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                         }
                         else if (sectionId === "skills") {
                             content = <Skills data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                        }
+                        else if (sectionId === "languages") {
+                            content = <Languages data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
                         }
                         else if (sectionId === "awards") {
                             content = <Awards data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;

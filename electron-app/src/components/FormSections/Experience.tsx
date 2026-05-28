@@ -22,14 +22,15 @@ export function Experience({ data, updateField, moveItem, deleteItem, addItem }:
                     <div className="grid grid-cols-2 gap-4 mb-5 pr-28">
                         <Field label="Company" value={exp.company || ""} onChange={(v) => updateField(["experience", i, "company"], v)} />
                         <Field label="Position" value={exp.position || ""} onChange={(v) => updateField(["experience", i, "position"], v)} />
-                        <Field label="Duration" value={exp.duration || ""} onChange={(v) => updateField(["experience", i, "duration"], v)} />
+                        <Field label="Work Type" value={exp.work_type || ""} onChange={(v) => updateField(["experience", i, "work_type"], v)} placeholder="e.g. Full-time, Remote, Hybrid" />
                         <Field label="Location" value={exp.location || ""} onChange={(v) => updateField(["experience", i, "location"], v)} />
+                        <Field label="Duration" value={exp.duration || ""} onChange={(v) => updateField(["experience", i, "duration"], v)} />
                     </div>
                     <div className="text-xs font-semibold text-[#a5a8b5] uppercase tracking-widest mb-3">Achievements (One per line)</div>
                     <RichTextArea rows={5} value={[].concat(exp.achievements || []).join("\n")} onChange={(v) => updateField(["experience", i, "achievements"], v.split("\n"))} placeholder="- Engineered highly scalable microservices..." />
                 </div>
             ))}
-            <button onClick={() => addItem(["experience"], { company: "", position: "", duration: "", achievements: [] })} className="group flex items-center justify-center gap-2 w-full py-3.5 border border-dashed border-[#c7cad5] text-[#1c1c1e] hover:text-[#5b76fe] hover:border-[#5b76fe] bg-transparent hover:bg-white rounded-[12px] transition-all font-medium"><Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Add Experience</button>
+            <button onClick={() => addItem(["experience"], { company: "", position: "", duration: "", work_type: "", location: "", achievements: [] })} className="group flex items-center justify-center gap-2 w-full py-3.5 border border-dashed border-[#c7cad5] text-[#1c1c1e] hover:text-[#5b76fe] hover:border-[#5b76fe] bg-transparent hover:bg-white rounded-[12px] transition-all font-medium"><Plus className="w-4 h-4 group-hover:scale-110 transition-transform" /> Add Experience</button>
         </>
     );
 }

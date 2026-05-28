@@ -1,16 +1,17 @@
 import { Bold, Italic } from "lucide-react";
 import { useRef } from "react";
 
-export function Field({ label, value, onChange, placeholder }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string }) {
+export function Field({ label, value, onChange, placeholder, disabled }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, disabled?: boolean }) {
     return (
-        <div className="relative flex flex-col focus-within:text-[#5b76fe] group pt-2.5">
+        <div className={`relative flex flex-col focus-within:text-[#5b76fe] group pt-2.5 ${disabled ? 'opacity-50' : ''}`}>
             <label className="text-[10px] font-bold uppercase tracking-wider text-[#a5a8b5] group-focus-within:text-[#5b76fe] transition-colors bg-white inline-block w-max px-1.5 absolute top-0 left-3 z-10">{label}</label>
             <input
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full bg-white border border-[#c7cad5] text-[#1c1c1e] text-sm rounded-[8px] p-[16px] outline-none focus:border-[#5b76fe] focus:ring-1 focus:ring-[#5b76fe] transition-all font-medium placeholder:text-[#a5a8b5]"
+                disabled={disabled}
+                className="w-full bg-white border border-[#c7cad5] text-[#1c1c1e] text-sm rounded-[8px] p-[16px] outline-none focus:border-[#5b76fe] focus:ring-1 focus:ring-[#5b76fe] transition-all font-medium placeholder:text-[#a5a8b5] disabled:cursor-not-allowed disabled:bg-[#f8f9fa]"
             />
         </div>
     );

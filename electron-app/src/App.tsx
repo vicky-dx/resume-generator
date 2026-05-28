@@ -17,10 +17,17 @@ const defaultJSON = `{
       "company": "Tech Corp",
       "position": "Senior Developer",
       "duration": "2021 - Present",
+      "work_type": "Full-time",
       "achievements": [
         "Led a team of 5",
         "Built a microservices architecture"
       ]
+    }
+  ],
+  "languages": [
+    {
+      "name": "English",
+      "level": "Fluent"
     }
   ]
 }`;
@@ -101,6 +108,7 @@ function App() {
     margin_lr: 0.5,
     item_spacing: 0.5,
     section_spacing: 6,
+    heading_content_gap: 4,
     entry_spacing: 3,
     bullet_indent: 1.2,
     bullet: "$\\bullet$",
@@ -184,6 +192,7 @@ function App() {
       // Pre-process extra protected terms into an array before sending
       const finalStyleConfig = {
         ...currentStyleConfig,
+        heading_content_gap: Math.max(1, currentStyleConfig.heading_content_gap || 1),
         extra_protected_terms: currentStyleConfig.extra_protected_terms
           ? currentStyleConfig.extra_protected_terms.split(",").map((t: string) => t.trim()).filter(Boolean)
           : []
@@ -302,7 +311,17 @@ function App() {
 
         {/* Tweaks Panel */}
         {showTweaks && (
-          <div ref={tweaksPanelRef} className="absolute top-12 left-4 right-4 z-20 bg-white ring-shadow-border border border-[#e9eaef] rounded-[24px] p-8 flex flex-col gap-8 animate-in slide-in-from-top-2 select-none overflow-y-auto max-h-[80vh]">
+          <>
+            {/* Backdrop Blur Overlay */}
+            <div 
+              onClick={() => setShowTweaks(false)} 
+              className="absolute inset-0 bg-[#1c1c1e]/15 backdrop-blur-[4px] z-20 animate-in fade-in duration-200"
+            />
+            {/* Tweaks Card Dialog */}
+            <div 
+              ref={tweaksPanelRef} 
+              className="absolute top-12 left-4 right-4 z-30 bg-white border border-[#e9eaef] rounded-[24px] p-8 flex flex-col gap-8 shadow-[0_20px_50px_rgba(42,65,182,0.12)] ring-1 ring-[#2a41b6]/5 select-none overflow-y-auto max-h-[80vh] animate-in slide-in-from-top-3 duration-300"
+            >
 
 
 
@@ -323,6 +342,7 @@ function App() {
                   >
                     <option value="classic.tex">classic.tex</option>
                     <option value="experiment.tex">experiment.tex</option>
+                    <option value="german.tex">german.tex</option>
                   </select>
                 </label>
 
@@ -349,7 +369,7 @@ function App() {
                   Size:
                   <div className="flex items-center gap-2">
                     <input type="range" min="8" max="16" step="0.5" name="font_size" value={styleConfig.font_size} onChange={handleStyleChange} className="w-24 accent-[#5b76fe]" />
-                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.font_size}</span>
+                    <input type="number" min="8" max="16" step="0.5" name="font_size" value={styleConfig.font_size} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                   </div>
                 </label>
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
@@ -376,19 +396,19 @@ function App() {
               <div className="flex flex-wrap items-center gap-5 bg-[#c3faf5]/30 ring-shadow-border p-4 rounded-[16px]">
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-[#555a6a]">Margins:</span>
+                  <span className="text-xs text-[#555a6a] font-semibold">Margins:</span>
                   <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                    TB:
+                    Top / Bottom:
                     <div className="flex items-center gap-2">
                       <input type="range" min="0.1" max="1.5" step="0.1" name="margin_tb" value={styleConfig.margin_tb} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
-                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.margin_tb}</span>
+                      <input type="number" min="0.1" max="1.5" step="0.1" name="margin_tb" value={styleConfig.margin_tb} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                     </div>
                   </label>
                   <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                    LR:
+                    Left / Right:
                     <div className="flex items-center gap-2">
                       <input type="range" min="0.1" max="1.5" step="0.1" name="margin_lr" value={styleConfig.margin_lr} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
-                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.margin_lr}</span>
+                      <input type="number" min="0.1" max="1.5" step="0.1" name="margin_lr" value={styleConfig.margin_lr} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                     </div>
                   </label>
                 </div>
@@ -396,19 +416,26 @@ function App() {
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-[#555a6a]">Gaps:</span>
+                  <span className="text-xs text-[#555a6a] font-semibold">Spacing / Gaps:</span>
                   <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                    Section:
+                    Between Sections:
                     <div className="flex items-center gap-2">
                       <input type="range" min="0" max="25" step="1" name="section_spacing" value={styleConfig.section_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
-                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.section_spacing}</span>
+                      <input type="number" min="0" max="25" step="1" name="section_spacing" value={styleConfig.section_spacing} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                     </div>
                   </label>
                   <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                    Entry:
+                    Below Heading Lines:
+                    <div className="flex items-center gap-2">
+                      <input type="range" min="1" max="15" step="1" name="heading_content_gap" value={styleConfig.heading_content_gap ?? 4} onChange={handleStyleChange} className="w-16 accent-[#5b76fe]" />
+                      <input type="number" min="1" max="15" step="1" name="heading_content_gap" value={styleConfig.heading_content_gap ?? 4} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
+                    Between Jobs:
                     <div className="flex items-center gap-2">
                       <input type="range" min="0" max="20" step="1" name="entry_spacing" value={styleConfig.entry_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
-                      <span className="text-[#5b76fe] w-4 font-mono text-[10px]">{styleConfig.entry_spacing}</span>
+                      <input type="number" min="0" max="20" step="1" name="entry_spacing" value={styleConfig.entry_spacing} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                     </div>
                   </label>
                 </div>
@@ -416,10 +443,10 @@ function App() {
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
                 <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                  Line Spacing:
+                  Line Spacing (bullets):
                   <div className="flex items-center gap-2">
                     <input type="range" min="0" max="10" step="0.5" name="item_spacing" value={styleConfig.item_spacing} onChange={handleStyleChange} className="w-20 accent-[#5b76fe]" />
-                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.item_spacing}</span>
+                    <input type="number" min="0" max="10" step="0.5" name="item_spacing" value={styleConfig.item_spacing} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                   </div>
                 </label>
 
@@ -435,7 +462,7 @@ function App() {
               <div className="flex flex-wrap items-center gap-5 bg-[#ffe6cd]/30 ring-shadow-border p-4 rounded-[16px]">
 
                 <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                  Bullet:
+                  Bullet Style:
                   <select
                     name="bullet"
                     value={styleConfig.bullet}
@@ -451,23 +478,23 @@ function App() {
                 </label>
 
                 <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium">
-                  Indent:
+                  Bullet Indentation:
                   <div className="flex items-center gap-2">
                     <input type="range" min="0" max="5" step="0.1" name="bullet_indent" value={styleConfig.bullet_indent} onChange={handleStyleChange} className="w-16 accent-[#5b76fe]" />
-                    <span className="text-[#5b76fe] w-6 font-mono text-[10px]">{styleConfig.bullet_indent}</span>
+                    <input type="number" min="0" max="5" step="0.1" name="bullet_indent" value={styleConfig.bullet_indent} onChange={handleStyleChange} className="w-12 bg-white border border-[#c7cad5]/80 text-[#5b76fe] focus:border-[#5b76fe] focus:ring-[1px] focus:ring-[#5b76fe] text-center font-mono text-[10px] rounded-[4px] py-0.5 outline-none transition-all appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                   </div>
                 </label>
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
                 <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium cursor-pointer hover:text-[#1c1c1e] transition-colors">
                   <input type="checkbox" name="use_icons" checked={styleConfig.use_icons} onChange={handleStyleChange} className="w-4 h-4 rounded-[4px] bg-white ring-shadow-border border border-[#e9eaef] text-[#5b76fe] focus:ring-blue-450 focus:ring-1 cursor-pointer" />
-                  Icons (fa5)
+                  Show Header Icons
                 </label>
 
                 <div className="w-px h-4 bg-[#c7cad5]"></div>
 
                 <label className="flex items-center gap-2 text-xs text-[#555a6a] font-medium flex-1 min-w-[200px]">
-                  Protect:
+                  Protect Capitalized Terms:
                   <input type="text" name="extra_protected_terms" placeholder="e.g. React, AWS" value={styleConfig.extra_protected_terms} onChange={handleStyleChange} className="bg-white border border-[#e9eaef] focus:border-blue-450 focus:ring-1 focus:ring-blue-450 outline-none rounded-[8px] px-[16px] py-[8px] text-[#1c1c1e] text-xs w-full placeholder:text-[#a5a8b5]" />
                 </label>
 
@@ -475,6 +502,7 @@ function App() {
             </div>
 
           </div>
+          </>
         )}
 
         {viewMode === "json" ? (

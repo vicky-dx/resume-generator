@@ -66,6 +66,7 @@ export interface StyleConfig {
     margin_lr: number;
     item_spacing: number;
     section_spacing: number;
+    heading_content_gap: number;
     entry_spacing: number;
     bullet_indent: number;
     bullet: string;
@@ -81,6 +82,7 @@ export const defaultStyleConfig: StyleConfig = {
     margin_lr: 0.6,
     item_spacing: 2.0,
     section_spacing: 10,
+    heading_content_gap: 4,
     entry_spacing: 8,
     bullet_indent: 1.2,
     bullet: "•",
@@ -127,6 +129,7 @@ export function buildNunjucksEnv(
     env.addGlobal("margin_lr", style.margin_lr);
     env.addGlobal("item_spacing", style.item_spacing);
     env.addGlobal("section_spacing", style.section_spacing);
+    env.addGlobal("heading_content_gap", style.heading_content_gap);
     env.addGlobal("entry_spacing", style.entry_spacing);
     env.addGlobal("bullet_indent", style.bullet_indent);
     env.addGlobal("bullet", style.bullet);
