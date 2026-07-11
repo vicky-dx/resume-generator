@@ -20,44 +20,64 @@ const coerceStringArray = (separator: string | RegExp) =>
 
 // --- Schemas --- //
 
+const githubSchema = z.string()
+    .url("Must be a valid URL (e.g. https://github.com/username)")
+    .refine((val) => val === "" || val.toLowerCase().includes("github.com"), {
+        message: "Must be a GitHub link (containing github.com)"
+    })
+    .or(z.literal(""))
+    .default("");
+
+const linkedinSchema = z.string()
+    .url("Must be a valid URL (e.g. https://linkedin.com/in/username)")
+    .refine((val) => val === "" || val.toLowerCase().includes("linkedin.com"), {
+        message: "Must be a LinkedIn link (containing linkedin.com)"
+    })
+    .or(z.literal(""))
+    .default("");
+
+const phoneSchema = z.string()
+    .regex(/^\+?[0-9\s\-()]{7,20}$/, "Invalid phone format")
+    .or(z.literal(""))
+    .default("");
+
 export const PersonalInfoSchema = z.object({
-    name: z.string().default(""),
-    location: z.string().default(""),
+    name: z.string().min(1, "Full Name is required").default(""),
+    location: z.string().min(1, "Location is required").default(""),
     tagline: z.string().default(""),
-    email: z.string().default(""),
-    phone: z.string().default(""),
-    github: z.string().default(""),
-    linkedin: z.string().default(""),
+    email: z.string().email("Invalid email format").or(z.literal("")).default(""),
+    phone: phoneSchema,
+    github: githubSchema,
+    linkedin: linkedinSchema,
 });
 
 export const SkillCategorySchema = z.object({
-    category: z.string().default(""),
+    category: z.string().min(1, "Category is required").default(""),
     items: coerceStringArray(","),
 });
 
 export const ExperienceSchema = z.object({
-    company: z.string().default(""),
-    // Handle aliases: "title" is the UI standard, "position" is the LaTeX template output
-    position: z.string().default(""), // Mapping `title` to `position` during processing if needed, but keeping it simple for the editor.
-    location: z.string().default(""),
-    work_type: z.string().default(""),
-    duration: z.string().default(""), // Maps "date" -> "duration" in python
+    company: z.string().min(1, "Company is required").default(""),
+    position: z.string().min(1, "Position is required").default(""),
+    location: z.string().min(1, "Location is required").default(""),
+    work_type: z.string().min(1, "Work Type is required").default(""),
+    duration: z.string().min(1, "Duration is required").default(""),
     achievements: coerceStringArray("\n"),
 });
 
 export const EducationSchema = z.object({
-    institution: z.string().default(""),
-    degree: z.string().default(""),
-    location: z.string().default(""),
-    duration: z.string().default(""),
+    institution: z.string().min(1, "Institution is required").default(""),
+    degree: z.string().min(1, "Degree / Course is required").default(""),
+    location: z.string().min(1, "Location is required").default(""),
+    duration: z.string().min(1, "Duration is required").default(""),
     gpa: z.string().default(""),
     "Relevant coursework": coerceStringArray(/,\s*/),
 });
 
 export const ProjectSchema = z.object({
-    name: z.string().default(""),
-    technologies: z.string().default(""), // Used instead of tech_stack
-    year: z.string().default(""),         // Alias for date
+    name: z.string().min(1, "Project Name is required").default(""),
+    technologies: z.string().default(""),
+    year: z.string().default(""),
     description: coerceStringArray("\n"),
 });
 
@@ -66,7 +86,7 @@ export const LibraryProjectSchema = ProjectSchema.extend({
 });
 
 export const AwardSchema = z.object({
-    title: z.string().default(""),
+    title: z.string().min(1, "Award Title is required").default(""),
     issuer: z.string().default(""),
     description: z.string().default(""),  // Alias for date in Pydantic
 });

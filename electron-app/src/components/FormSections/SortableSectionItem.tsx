@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 
 interface ThemeProps {
@@ -9,7 +9,7 @@ interface ThemeProps {
     border: string;
 }
 
-export function SortableSectionItem({ id, title, children, theme, onDelete }: { id: string, title: string, children: React.ReactNode, theme?: ThemeProps, onDelete?: () => void }) {
+export function SortableSectionItem({ id, title, children, theme, onDelete, hasError }: { id: string, title: string, children: React.ReactNode, theme?: ThemeProps, onDelete?: () => void, hasError?: boolean }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
     const [open, setOpen] = useState(false);
 
@@ -32,8 +32,14 @@ export function SortableSectionItem({ id, title, children, theme, onDelete }: { 
                     <div {...attributes} {...listeners} className={`bg-white hover:bg-white p-1.5 rounded-[8px] ${safeTheme.text} ring-[1px] ring-[rgb(224,226,232)] border border-[#c7cad5] cursor-grab active:cursor-grabbing transition-colors touch-none`}>
                         <GripVertical className="w-4 h-4" />
                     </div>
-                    <button onClick={() => setOpen(!open)} className={`outline-none text-left flex-1 font-display text-[22px] ${safeTheme.text} tracking-[-0.72px] select-none`}>
-                        {title}
+                    <button onClick={() => setOpen(!open)} className={`outline-none text-left flex-1 font-display text-[22px] ${safeTheme.text} tracking-[-0.72px] select-none flex items-center gap-2 cursor-pointer`}>
+                        <span>{title}</span>
+                        {hasError && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200/50 px-2 py-0.5 rounded-full select-none uppercase tracking-wider animate-pulse">
+                                <AlertCircle className="w-3 h-3 text-red-500" />
+                                Issues
+                            </span>
+                        )}
                     </button>
                 </div>
                 <div className="flex items-center gap-1">
@@ -49,7 +55,7 @@ export function SortableSectionItem({ id, title, children, theme, onDelete }: { 
                             <Trash2 className="w-5 h-5" />
                         </button>
                     )}
-                    <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white transition-colors ${safeTheme.text}`}>
+                    <button onClick={() => setOpen(!open)} className={`p-1.5 rounded-full hover:bg-white transition-colors ${safeTheme.text} cursor-pointer`}>
                         {open ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </button>
                 </div>
