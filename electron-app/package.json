@@ -59,6 +59,11 @@
   "build": {
     "appId": "com.resume.generator",
     "productName": "ResumeGenerator",
+    "publish": {
+      "provider": "github",
+      "owner": "vicky-dx",
+      "repo": "resume-generator"
+    },
     "asar": true,
     "npmRebuild": false,
     "directories": {
