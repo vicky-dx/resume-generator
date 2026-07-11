@@ -14,7 +14,7 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ["events", "path", "fs", "child_process", "util", "nunjucks"],
+              external: ["electron", "electron-updater", "events", "path", "fs", "child_process", "util", "nunjucks"],
             },
           },
         },
