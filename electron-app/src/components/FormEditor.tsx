@@ -29,6 +29,7 @@ import { Skills } from "./FormSections/Skills";
 import { SortableSectionItem } from "./FormSections/SortableSectionItem";
 import { Summary } from "./FormSections/Summary";
 import { Languages } from "./FormSections/Languages";
+import { ResumeDataSchema } from "../models/resume";
 
 interface FormProps {
     jsonText: string;
@@ -38,7 +39,26 @@ interface FormProps {
 export default function FormEditor({ jsonText, onChange }: FormProps) {
     const [data, setData] = useState<any>({});
     const [error, setError] = useState<string | null>(null);
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const isSyncing = useRef(false);
+
+    useEffect(() => {
+        if (!data || Object.keys(data).length === 0) {
+            setValidationErrors({});
+            return;
+        }
+        const res = ResumeDataSchema.safeParse(data);
+        if (!res.success) {
+            const errors: Record<string, string> = {};
+            res.error.issues.forEach(issue => {
+                const pathKey = issue.path.join(".");
+                errors[pathKey] = issue.message;
+            });
+            setValidationErrors(errors);
+        } else {
+            setValidationErrors({});
+        }
+    }, [data]);
 
     useEffect(() => {
         if (isSyncing.current) return;
@@ -187,35 +207,39 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
     return (
         <div className="flex-1 overflow-y-auto p-8 bg-white text-[#1c1c1e]">
             {/* Personal Info Box (Always on Top) */}
-            <PersonalInfo data={data} updateField={updateField} />
+            <PersonalInfo data={data} updateField={updateField} errors={validationErrors} />
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
                     {sectionOrder.map((sectionId: string) => {
                         let content = null;
                         if (sectionId === "summary") {
-                            content = <Summary data={data} updateField={updateField} />;
+                            content = <Summary data={data} updateField={updateField} errors={validationErrors} />;
                         }
                         else if (sectionId === "experience") {
-                            content = <Experience data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Experience data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
                         else if (sectionId === "education") {
-                            content = <Education data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Education data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
                         else if (sectionId === "projects") {
-                            content = <Projects data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Projects data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
                         else if (sectionId === "skills") {
-                            content = <Skills data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Skills data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
                         else if (sectionId === "languages") {
-                            content = <Languages data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Languages data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
                         else if (sectionId === "awards") {
-                            content = <Awards data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} />;
+                            content = <Awards data={data} updateField={updateField} moveItem={moveItem} deleteItem={deleteItem} addItem={addItem} errors={validationErrors} />;
                         }
 
                         if (!content) return null;
+
+                        const sectionHasErrors = Object.keys(validationErrors).some(
+                            (key) => key === sectionId || key.startsWith(sectionId + ".")
+                        );
 
                         return (
                             <SortableSectionItem
@@ -224,6 +248,7 @@ export default function FormEditor({ jsonText, onChange }: FormProps) {
                                 title={sectionTitles[sectionId]}
                                 theme={sectionThemes[sectionId]}
                                 onDelete={() => deleteSection(sectionId)}
+                                hasError={sectionHasErrors}
                             >
                                 {content}
                             </SortableSectionItem>
