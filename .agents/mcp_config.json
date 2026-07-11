@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "resume-generator": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server.ts"],
+      "cwd": "c:/Users/vicky/Desktop/PROJECTS/resume/resume-generator/electron-app"
+    }
+  }
+}
