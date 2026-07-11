@@ -50,13 +50,13 @@ graph TD
         F["useUpdater.ts / useCompiler.ts"]:::frontend
     end
 
-    subgraph Bridge ["IPC Bridge & Providers"]
+    subgraph Bridge ["IPC Bridge and Providers"]
         G["preload.ts (contextBridge updateAPI / electronAPI)"]:::ipc
         H["ElectronUpdateProvider.ts / MockUpdateProvider.ts"]:::ipc
     end
 
     subgraph Main ["Main Process (Electron Backend)"]
-        I["main.ts (App Bootstrap & IPC Handlers)"]:::backend
+        I["main.ts (App Bootstrap / IPC Handlers)"]:::backend
         J["UpdateManager.ts (Singleton AutoUpdater)"]:::backend
     end
 
@@ -64,39 +64,39 @@ graph TD
         K["mcp-server.ts (Stdio Transport Server)"]:::backend
     end
 
-    subgraph SharedServices ["Core Core Compiler (Shared)"]
+    subgraph SharedServices ["Core Compiler (Shared)"]
         L["compileResume (Pure Pipeline Function)"]:::service
-        M["normalizeResume() & ResumeSchema"]:::service
+        M["normalizeResume() and ResumeSchema"]:::service
         N["buildLatex() (Nunjucks Renderer)"]:::service
         O["latexRunner.ts (commandExists / runLatexmk)"]:::service
         P["latexErrorParser.ts (Log Parser)"]:::service
     end
 
-    subgraph LocalOS ["System OS & Binaries"]
+    subgraph LocalOS ["System OS and Binaries"]
         Q["latexmk / xelatex (CLI Process)"]:::external
         R["System Temp Directory"]:::external
         S["GitHub Releases (Real Update Target)"]:::external
     end
 
     %% Data Flow Connections
-    A <-->|State Bindings| C
-    A <-->|State Bindings| B
-    F <-->|Implements UpdateProvider| H
-    H <-->|Exposes API| G
-    G <-->|IPC Channels| I
+    A -->|State Bindings| C
+    A -->|State Bindings| B
+    F -->|Implements UpdateProvider| H
+    H -->|Exposes API| G
+    G -->|IPC Channels| I
     
     I -->|Call| L
     K -->|Call| L
     
-    L -->|1. Normalize & Validate| M
+    L -->|1. Normalize and Validate| M
     L -->|2. Render Code| N
     L -->|3. Compile Executable| O
     O -->|Spawn CLI| Q
     Q -->|Aux logs & PDF| R
     O -.->|OnError: Parse logs| P
     
-    J <-->|electron-updater| S
-    J <-->|IPC update status| G
+    J -->|electron-updater| S
+    J -->|IPC update status| G
     
     A -->|Renders Banners & Modals| D
     A -->|Renders What's New| E
