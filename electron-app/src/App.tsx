@@ -95,6 +95,7 @@ export default function App() {
                     state={updater.state}
                     progress={updater.progress}
                     info={updater.info}
+                    error={updater.error}
                     onInstall={updater.install}
                 />
 

@@ -6,10 +6,11 @@ interface UpdateBannerProps {
     state: UpdateState;
     progress: UpdateProgress | null;
     info: UpdateInfo | null;
+    error?: string | null;
     onInstall: () => void;
 }
 
-export default function UpdateBanner({ state, progress, info, onInstall }: UpdateBannerProps) {
+export default function UpdateBanner({ state, progress, info, error, onInstall }: UpdateBannerProps) {
     const [dismissed, setDismissed] = useState(false);
 
     if (dismissed) return null;
@@ -68,8 +69,8 @@ export default function UpdateBanner({ state, progress, info, onInstall }: Updat
                     )}
 
                     {state === "error" && (
-                        <span className="text-red-500 font-bold">
-                            ⚠️ Auto-update error: Failed to download update packages.
+                        <span className="text-red-500 font-bold text-[12px]">
+                            ⚠️ Auto-update error: {error || "Failed to download update packages."}
                         </span>
                     )}
                 </div>
