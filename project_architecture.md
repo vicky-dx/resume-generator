@@ -6,22 +6,31 @@ This document details the system design, file structure, and data flows of the *
 
 ## 1. System Overview
 
-The **Resume Generator** is an Electron desktop application built with **React**, **Vite**, **TypeScript**, and **Tailwind CSS**. It is designed to take structured resume data in JSON format (edited via raw code or a form UI), apply styles, compile it into LaTeX via a **Nunjucks** templating environment, and finally call the system's LaTeX distribution (specifically `latexmk` with the `xelatex` engine) to produce a high-quality PDF resume.
+The **Resume Generator** is an Electron desktop application and AI backend built with **React**, **Vite**, **TypeScript**, and **Tailwind CSS**. 
+
+It takes structured resume data (edited via a dynamic form UI or raw JSON), normalizes it, validates it against a strict Zod schema, renders it into LaTeX using a **Nunjucks** templating environment, and compiles it via `latexmk` / `xelatex` into a high-quality PDF.
+
+The core compilation and validation layers are decoupled from Electron into a shared pipeline, enabling a built-in **Model Context Protocol (MCP) Server** to share the exact same compilation workflow with external AI agents.
 
 ### Technology Stack
-- **Desktop Runtime**: Electron 41.x
-- **Frontend Framework**: React 19.x & TypeScript, styled with Tailwind CSS
-- **Code/JSON Editor**: Monaco Editor (`@monaco-editor/react`)
-- **Drag-and-Drop Reordering**: `@dnd-kit/core` & `@dnd-kit/sortable`
-- **Schema Validation**: Zod (`zod`)
-- **Template Engine**: Nunjucks (adapted with custom delimiters for LaTeX compatibility)
-- **PDF Compilation Backend**: Local LaTeX distribution (requires `xelatex` and `latexmk`)
+- **Desktop Shell**: Electron 41.x, Vite, Context-Bridge Preload Script.
+- **Frontend Framework**: React 19.x & TypeScript, styled with Tailwind CSS.
+- **Code/JSON Editor**: Monaco Editor (`@monaco-editor/react`).
+- **Drag-and-Drop Reordering**: `@dnd-kit/core` & `@dnd-kit/sortable`.
+- **Schema Validation**: Zod (`zod`).
+- **Template Engine**: Nunjucks (adapted with custom delimiters for LaTeX compatibility).
+- **AI Integration**: Model Context Protocol (MCP) SDK (`@modelcontextprotocol/sdk`).
+- **Auto-Updates**: `electron-updater` (packaged and metadata-aligned with GitHub Releases).
+- **PDF Compilation Backend**: Local LaTeX distribution (requires `xelatex` and `latexmk`).
 
 ---
 
 ## 2. Core Architecture & Data Flow
 
-The architecture is divided into the **Renderer Process** (React Frontend) and the **Main Process** (Electron Backend). They communicate asynchronously over an IPC (Inter-Process Communication) bridge.
+The application is divided into three primary layers:
+1. **Renderer Interface (React Frontend)**: Manages UI panes, state hooks, and client update notifications.
+2. **Main Core Pipeline (Shared Services)**: Contains the pure compilation/validation pipeline, LaTeX builders, and runners.
+3. **Infrastructure Hosts (Electron & MCP)**: Exposes the core pipeline to the desktop app and AI IDE agents.
 
 ```mermaid
 graph TD
@@ -29,124 +38,153 @@ graph TD
     classDef frontend fill:#c3faf5,stroke:#187574,stroke-width:2px,color:#1c1c1e;
     classDef ipc fill:#ffe6cd,stroke:#746019,stroke-width:2px,color:#1c1c1e;
     classDef backend fill:#fde0f0,stroke:#600000,stroke-width:2px,color:#1c1c1e;
+    classDef service fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px,color:#1c1c1e;
     classDef external fill:#e9eaef,stroke:#c7cad5,stroke-width:2px,color:#1c1c1e;
 
     subgraph Renderer ["Renderer Process (React Frontend)"]
-        A["App.tsx (Main View & Settings State)"]:::frontend
-        B["FormEditor.tsx (Form UI Sections)"]:::frontend
-        C["Monaco Editor (Raw JSON Edit)"]:::frontend
-        D["Zod Schemas (resume.ts)"]:::frontend
-        E["PDF Preview (Iframe & PDF URL)"]:::frontend
+        A["App.tsx (Layout Orchestrator)"]:::frontend
+        B["FormEditor.tsx (Zod-Validated Form Sections)"]:::frontend
+        C["Monaco JSON Editor"]:::frontend
+        D["UpdateBanner.tsx (Silent Download Display)"]:::frontend
+        E["ReleaseNotesModal.tsx (What's New)"]:::frontend
+        F["useUpdater.ts / useCompiler.ts"]:::frontend
     end
 
-    subgraph Bridge ["IPC Bridge"]
-        F["preload.ts (contextBridge)"]:::ipc
+    subgraph Bridge ["IPC Bridge & Providers"]
+        G["preload.ts (contextBridge updateAPI / electronAPI)"]:::ipc
+        H["ElectronUpdateProvider.ts / MockUpdateProvider.ts"]:::ipc
     end
 
     subgraph Main ["Main Process (Electron Backend)"]
-        G["main.ts (App Lifecycle & IPC Handlers)"]:::backend
-        H["builder.ts (Nunjucks & Polyfills)"]:::backend
-        I["escaper.ts (LaTeX Special Chars & Markup)"]:::backend
+        I["main.ts (App Bootstrap & IPC Handlers)"]:::backend
+        J["UpdateManager.ts (Singleton AutoUpdater)"]:::backend
+    end
+
+    subgraph MCP ["MCP Daemon"]
+        K["mcp-server.ts (Stdio Transport Server)"]:::backend
+    end
+
+    subgraph SharedServices ["Core Core Compiler (Shared)"]
+        L["compileResume (Pure Pipeline Function)"]:::service
+        M["normalizeResume() & ResumeSchema"]:::service
+        N["buildLatex() (Nunjucks Renderer)"]:::service
+        O["latexRunner.ts (commandExists / runLatexmk)"]:::service
+        P["latexErrorParser.ts (Log Parser)"]:::service
     end
 
     subgraph LocalOS ["System OS & Binaries"]
-        J["LaTeX Templates (.tex files)"]:::external
-        K["latexmk / xelatex (CLI Process)"]:::external
-        L["System Temp Directory"]:::external
+        Q["latexmk / xelatex (CLI Process)"]:::external
+        R["System Temp Directory"]:::external
+        S["GitHub Releases (Real Update Target)"]:::external
     end
 
     %% Data Flow Connections
-    A <-->|Active Text State| C
-    A <-->|State Synchronizer| B
-    B -.->|Normalizes & Coerces| D
-    A -->|IPC Request: generate-pdf| F
-    F -->|invoke('generate-pdf')| G
+    A <-->|State Bindings| C
+    A <-->|State Bindings| B
+    F <-->|Implements UpdateProvider| H
+    H <-->|Exposes API| G
+    G <-->|IPC Channels| I
     
-    G -->|Reads Templates| J
-    G -->|Prepares context| H
-    H -->|LaTeX escapes inputs| I
-    H -->|Renders output.tex| L
-    G -->|Spawns compilation| K
-    K -->|Compiles output.pdf| L
+    I -->|Call| L
+    K -->|Call| L
     
-    G -->|Returns pdfPath| F
-    F -->|Update pdfUrl| E
+    L -->|1. Normalize & Validate| M
+    L -->|2. Render Code| N
+    L -->|3. Compile Executable| O
+    O -->|Spawn CLI| Q
+    Q -->|Aux logs & PDF| R
+    O -.->|OnError: Parse logs| P
     
-    A -->|IPC: open-json / save-json| F
-    F -->|File Dialogs & fs| G
+    J <-->|electron-updater| S
+    J <-->|IPC update status| G
+    
+    A -->|Renders Banners & Modals| D
+    A -->|Renders What's New| E
 ```
 
 ---
 
 ## 3. Directory Structure Details
 
-Here is the directory structure of the repository, highlighting major files and their roles:
-
 ```
 resume-generator/
+├── .agents/                        # Project-scoped AI configurations (MCP config)
+├── .github/workflows/              # CI/CD Workflows
+│   └── release.yml                 # Builds & publishes Electron App + latest.yml on git tag push
 ├── templates/                      # LaTeX templates with Nunjucks tags
-│   ├── classic.tex                 # Classic layout template
-│   ├── experiment.tex              # Experimental layout
-│   ├── german.tex                  # German language / format layout
-│   └── TEMPLATE_GUIDE.md           # Instructions on how to write custom templates
+│   └── classic.tex                 # Default resume template
 │
 └── electron-app/                   # Electron Desktop codebase
     ├── electron/                   # Electron Main & Preload scripts
-    │   ├── main.ts                 # Main process: registers IPC handlers, launches compiler
-    │   └── preload.ts              # Preload bridge: exposes context-isolated electronAPI
+    │   ├── main.ts                 # Main process: registers IPC, binds compileResume
+    │   ├── preload.ts              # Bridge: exposes context-isolated electronAPI/updateAPI
+    │   └── UpdateManager.ts        # Singleton wrapper for electron-updater configurations
     │
     ├── src/                        # Renderer process (React Frontend)
     │   ├── main.tsx                # Frontend entry point
-    │   ├── App.tsx                 # Main application view (handles layout, tweaks, PDF iframe)
-    │   ├── index.css               # App styles and font configs
+    │   ├── App.tsx                 # Root orchestrator layout (wires layout panes & modals)
+    │   ├── mcp-server.ts           # Model Context Protocol stdio daemon
     │   │
     │   ├── components/             # React UI components
-    │   │   ├── FormEditor.tsx      # Orchestrates form UI; parses JSON, handles list sorting
-    │   │   └── FormSections/       # Individual resume form sections
-    │   │       ├── PersonalInfo.tsx
-    │   │       ├── Summary.tsx
-    │   │       ├── Experience.tsx
-    │   │       ├── Projects.tsx
-    │   │       ├── Education.tsx
-    │   │       ├── Skills.tsx
-    │   │       ├── Languages.tsx
-    │   │       ├── Awards.tsx
-    │   │       ├── SortableSectionItem.tsx  # Wrapper for drag-and-drop support
-    │   │       └── SharedComponents.tsx      # Reusable fields, lists, inputs
+    │   │   ├── FormEditor.tsx      # Orchestrates form UI; validates inputs with Zod
+    │   │   ├── SetupWizard.tsx     # Wizard helper verifying latexmk/xelatex status
+    │   │   ├── UpdateBanner.tsx    # Displays silent update progress & restart prompts
+    │   │   ├── ReleaseNotesModal.tsx # "What's New" popup shown after restart installs
+    │   │   └── Settings/           # Style presets panel components
     │   │
-    │   ├── hooks/
-    │   │   └── useCompileStatus.ts # Manages LaTeX compilation status/error state
+    │   ├── hooks/                  # Custom state hooks
+    │   │   ├── useDocument.ts      # Handles local file load/saves
+    │   │   ├── useCompiler.ts      # Triggers compilation and manages pdfUrl
+    │   │   ├── useStyle.ts         # Coordinates margins, font-sizes, and section colors
+    │   │   └── useUpdater.ts       # Hook driving auto-updates with 6-hour throttles
     │   │
-    │   ├── lib/                    # Core LaTeX logic (Shared with Electron Main)
-    │   │   ├── builder.ts          # Nunjucks environment creation, Jinja compatibility polyfills
-    │   │   └── escaper.ts          # LaTeX escaping, Markdown converting, term protection
+    │   ├── layout/                 # Flex/Grid pane layouts
+    │   │   ├── AppLayout.tsx       # Core shell boundary
+    │   │   ├── EditorPane.tsx      # Sidebar holding editor forms & Monaco JSON
+    │   │   └── PreviewPane.tsx     # Holds PDF iframe viewer
+    │   │
+    │   ├── lib/                    # Low-level core libraries
+    │   │   ├── builder.ts          # Nunjucks compiler & Jinja python polyfills
+    │   │   ├── escaper.ts          # LaTeX reserved escaper & term wrapper
+    │   │   ├── latexRunner.ts      # Low-level latexmk command runner (Node spawn)
+    │   │   └── latexErrorParser.ts # Decodes raw logs to extract line-level issues
     │   │
     │   ├── models/
-    │   │   └── resume.ts           # Zod schema verification & data normalization
+    │   │   └── resume.ts           # Zod schema definitions (Email, Phone validation)
     │   │
-    │   └── types/
-    │       └── electron.d.ts       # TypeScript window declarations
-    │
-    ├── vite.config.ts              # Vite configuration (includes Electron plugins)
-    ├── tsconfig.json               # TypeScript config
-    └── package.json                # Project dependencies and build/run scripts
+    │   ├── providers/              # IPC update provider implementations
+    │   │   ├── ElectronUpdateProvider.ts # Connects to live main process UpdateManager
+    │   │   └── MockUpdateProvider.ts     # Mock update simulator for sandbox testing
+    │   │
+    │   ├── services/               # Shared high-level core services
+    │   │   ├── ResumeCompiler.ts   # Core compileResume() pipeline function
+    │   │   ├── ResumeNormalizer.ts # Normalizes missing properties in raw input JSON
+    │   │   └── ElectronService.ts  # Renderer IPC wrapper
+    │   │
+    │   ├── types/                  # TS Type definitions
+    │   │   ├── compiler.ts         # CompileResult discriminated unions
+    │   │   └── update.ts           # Auto-updater interfaces
+    │   │
+    │   ├── vite.config.ts          # Vite build config (includes external Rollup rules)
+    │   └── package.json            # Node project configuration
 ```
 
 ---
 
 ## 4. Key Components Explained
 
-### 4.1 LaTeX Rendering Pipeline (`builder.ts` & `escaper.ts`)
-*   **LaTeX Safe Tags**: Nunjucks is configured with delimiters `<% ... %>` (blocks), `<< ... >>` (variables), and `<# ... #>` (comments) to prevent collision with LaTeX's curly braces (`{ }`).
-*   **Jinja Compatibility Polyfills**: Since original templates were authored for Python's Jinja2 engine, `builder.ts` polyfills Python string and array methods (e.g. `rstrip`, `lstrip`, `startswith`, `endswith`, `.get()`, and negative array indices like `[-1]`) on the Javascript prototype levels.
-*   **Escaping and Term Protection**: `escaper.ts` performs a three-stage conversion on text:
-    1.  Escaping LaTeX reserved characters: `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`.
-    2.  Translating Markdown tags into LaTeX command equivalents (`**bold**` -> `\textbf{bold}`).
-    3.  Term Protection: Enclosing critical tech terms (e.g. `Kubernetes`, `React`, `AWS`) in `\mbox{...}` to prevent them from breaking across line-wraps.
+### 4.1 Shared `compileResume` Pipeline
+*   **Decoupled Pure Function**: Implemented in `ResumeCompiler.ts`, `compileResume(...)` accepts raw resume data and compilation configurations. It is entirely isolated from Electron UI boundaries.
+*   **Validation Discriminated Union**: Returns a strongly typed `CompileResult` union (`success: true` or `success: false` with categories: `validation`, `compilation`, and `cancelled`). This eliminates impossible typing states in callers.
+*   **Resource Management**: Spawns jobs inside unique timestamped subdirectories inside the OS temp directory. All compilation files (`.tex`, `.aux`, `.log`) are cleared inside a `finally` block to protect storage, keeping only the final PDF on success, or removing the entire folder on failure.
 
-### 4.2 Electron compilation Lifecycle (`main.ts`)
-*   When React invokes `generate-pdf`, a unique timestamped job folder is prepared in the operating system's temporary directory.
-*   The raw data is deep-escaped, polyfilled, merged with user-defined style tweaks (fonts, margins, colors, item spacing), and rendered through Nunjucks.
-*   The system executes `latexmk -xelatex -interaction=nonstopmode -output-directory=<temp_dir> <temp_dir>/output-<jobId>.tex`.
-*   After successful output, the temporary PDF file path is returned to React as a local URL (`file://.../output-<jobId>.pdf`), which is loaded inside an `iframe`.
-*   Old compilation jobs in the temp folder are cleaned up automatically after 1 hour.
+### 4.2 Model Context Protocol (MCP) Server
+*   **Stdio Transport**: Listens on stdin/stdout to connect with AI IDE interfaces.
+*   **Shared Operations**: Leverages the identical `compileResume` pipeline. When `generate_resume_pdf` is called, it normalizes and validates inputs, compiles the LaTeX PDF, writes the file to the user's requested output path, and cleanly cleans up.
+*   **Error Parsing**: Passes compilation log trails to `latexErrorParser.ts` to return precise compilation error locations to the AI agent, allowing the AI to auto-fix and re-run compilation.
+
+### 4.3 Electron Auto-Updater Lifecycle
+*   **UpdateManager (Main Process)**: Singleton wrapper around `electron-updater`'s `autoUpdater` with `autoDownload = true` (silent download in background).
+*   **6-Hour Throttle**: Checked by `useUpdater.ts` using a `localStorage` timestamp to prevent rate-limiting requests on every app boot.
+*   **State Machine**: Runs: `Idle` $\rightarrow$ `Checking` $\rightarrow$ `Available` $\rightarrow$ `Downloading` $\rightarrow$ `ReadyToInstall` $\rightarrow$ `Installing` $\rightarrow$ `Error`.
+*   **What's New Prompt**: Banner click triggers cache of update information into `localStorage` before restarting. On reboot, `App.tsx` reads version info, renders a release notes modal, and clears the cache.
